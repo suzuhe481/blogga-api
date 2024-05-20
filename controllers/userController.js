@@ -9,7 +9,7 @@ exports.GET_ALL_USERS = asyncHandler(async (req, res, next) => {
 // // GET - get a single user
 exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
   console.log(req);
-  return res.send(`GET - get a single user - ID: ${req.params.userId}`);
+  return res.send(`GET - get a single user - ID: ${req.params.id}`);
 });
 
 // // POST - create a single user
@@ -21,10 +21,10 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
 
 // // PUT - update a single user
 exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
-  return res.send(`PUT - update a single user - ID: ${req.params.userId}`);
+  return res.send(`PUT - update a single user - ID: ${req.params.id}`);
 });
 
 // // DELETE - delete a single user
 exports.DELETE_ONE_USER = asyncHandler(async (req, res, next) => {
-  return res.send(`DELETE - delete a single user - ${req.params.userId}`);
+  return res.send(`DELETE - delete a single user - ${req.params.id}`);
 });

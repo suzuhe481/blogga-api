@@ -9,7 +9,7 @@ exports.GET_ALL_COMMENTS = asyncHandler(async (req, res, next) => {
 // // GET - get a single comment
 exports.GET_ONE_COMMENT = asyncHandler(async (req, res, next) => {
   console.log(req);
-  return res.send(`GET - get a single comment - ID: ${req.params.commentId}`);
+  return res.send(`GET - get a single comment - ID: ${req.params.id}`);
 });
 
 // // POST - create a single comment
@@ -21,12 +21,10 @@ exports.POST_ONE_COMMENT = asyncHandler(async (req, res, next) => {
 
 // // PUT - update a single comment
 exports.PUT_ONE_COMMENT = asyncHandler(async (req, res, next) => {
-  return res.send(
-    `PUT - update a single comment - ID: ${req.params.commentId}`
-  );
+  return res.send(`PUT - update a single comment - ID: ${req.params.id}`);
 });
 
 // // DELETE - delete a single comment
 exports.DELETE_ONE_COMMENT = asyncHandler(async (req, res, next) => {
-  return res.send(`DELETE - delete a single comment - ${req.params.commentId}`);
+  return res.send(`DELETE - delete a single comment - ${req.params.id}`);
 });
