@@ -3,20 +3,7 @@ const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const mongoose = require("mongoose");
 require("dotenv").config();
-
-// Set up a Mongoose connection
-mongoose.set("strictQuery", false);
-
-const dev_db_url = "placeholder";
-const mongoDB = process.env.MONGODB_URI || dev_db_url;
-
-// Wait for database connect. Logs error if fail to connect.
-main().catch((err) => console.log(err));
-async function main() {
-  await mongoose.connect(mongoDB);
-}
 
 // Routes
 const userRouter = require("./routes/user");
@@ -24,6 +11,9 @@ const postRouter = require("./routes/post");
 const commentRouter = require("./routes/comment");
 
 var app = express();
+
+// Creates connection to MongoDB
+require("./config/database");
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
