@@ -44,6 +44,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// Routes
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/posts/:postId/comments", commentRouter); // Gets comment resources on a specific post
