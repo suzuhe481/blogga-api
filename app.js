@@ -49,6 +49,13 @@ app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/posts/:postId/comments", commentRouter); // Gets comment resources on a specific post
 
+// For debugging.
+// app.use((req, res, next) => {
+// console.log(req.session);
+// console.log(req.user);
+//   next();
+// });
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
