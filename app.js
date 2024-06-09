@@ -55,6 +55,14 @@ app.use("/posts/:postId/comments", commentRouter); // Gets comment resources on 
 //   next();
 // });
 
+// Allows for the access of variables in all views without needing to manually pass it into every
+// controller it's needed.
+// req.user - The current user.
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
+  next();
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
