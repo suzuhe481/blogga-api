@@ -17,6 +17,12 @@ var app = express();
 // Creates connection to MongoDB
 require("./config/database");
 
+// Requiring the passport configuration and passing in the global passport object.
+require("./config/passport")(passport);
+
+// Requiring the passport-jwt configuration and passing in the global passport object.
+require("./config/passport-jwt")(passport);
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
