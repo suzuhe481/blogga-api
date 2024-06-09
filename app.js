@@ -44,6 +44,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// Initializes the passport object on every request.
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Routes
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
