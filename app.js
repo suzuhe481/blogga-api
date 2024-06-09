@@ -47,6 +47,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/users", userRouter);
 app.use("/posts", postRouter);
 app.use("/posts/:postId/comments", commentRouter); // Gets comment resources on a specific post
+app.use("/", indexRouter);
 
 // For debugging.
 // app.use((req, res, next) => {
