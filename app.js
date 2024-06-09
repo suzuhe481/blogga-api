@@ -1,5 +1,6 @@
 const createError = require("http-errors");
 const express = require("express");
+const session = require("express-session");
 const path = require("path");
 const logger = require("morgan");
 const passport = require("passport");
