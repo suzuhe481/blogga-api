@@ -5,6 +5,7 @@ const passport = require("passport");
 const issueJWT = require("../lib/jwtUtil").issueJWT;
 const isUser = require("../lib/authenticateUtil").isUser;
 const isAdmin = require("../lib/authenticateUtil").isAdmin;
+const hasJWT = require("../lib/authenticateUtil").hasJWT;
 
 /* GET - home page. */
 router.get("/", function (req, res, next) {
@@ -70,18 +71,16 @@ router.get("/protected", isUser, function (req, res, next) {
 /* GET */
 // Only for admins. Verified with jwt and isAdmin middleware.
 // Admin Resource - Requires JWT authorization to access.
-router.get("/admin-resource", isUser, isAdmin, function (req, res, next) {
-  passport.authenticate("jwt", { session: false }, function (err, user, info) {
-    // If an exception occurred, "err" will exist.
-    // If jwt authentication failed, "user" will be false.
-    if (err || !user) {
-      return res.status(401).json({ msg: "You are not authorized." });
-    } else {
-      return res.status(200).json({
-        msg: "You can view this protected admin resource",
-      });
-    }
-  })(req, res, next);
-});
+router.get(
+  "/admin-resource",
+  isUser,
+  isAdmin,
+  hasJWT,
+  function (req, res, next) {
+    return res.status(200).json({
+      msg: "You can view this protected admin resource",
+    });
+  }
+);
 
 module.exports = router;
