@@ -2,6 +2,10 @@ var express = require("express");
 var router = express.Router();
 const passport = require("passport");
 
+const issueJWT = require("../lib/jwtUtil").issueJWT;
+const isUser = require("../lib/authenticateUtil").isUser;
+const isAdmin = require("../lib/authenticateUtil").isAdmin;
+
 /* GET - home page. */
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
