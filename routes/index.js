@@ -67,4 +67,21 @@ router.get("/protected", isUser, function (req, res, next) {
   res.render("protected", { title: "Protected" });
 });
 
+/* GET */
+// Only for admins. Verified with jwt and isAdmin middleware.
+// Admin Resource - Requires JWT authorization to access.
+router.get("/admin-resource", isUser, isAdmin, function (req, res, next) {
+  passport.authenticate("jwt", { session: false }, function (err, user, info) {
+    // If an exception occurred, "err" will exist.
+    // If jwt authentication failed, "user" will be false.
+    if (err || !user) {
+      return res.status(401).json({ msg: "You are not authorized." });
+    } else {
+      return res.status(200).json({
+        msg: "You can view this protected admin resource",
+      });
+    }
+  })(req, res, next);
+});
+
 module.exports = router;
