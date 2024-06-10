@@ -56,4 +56,9 @@ router.get("/log-out", (req, res, next) => {
   });
 });
 
+/* GET - Login success */
+router.get("/login-success", isUser, function (req, res, next) {
+  res.render("login-success", { title: "Successful log in" });
+});
+
 module.exports = router;
