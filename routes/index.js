@@ -61,4 +61,10 @@ router.get("/login-success", isUser, function (req, res, next) {
   res.render("login-success", { title: "Successful log in" });
 });
 
+/* GET */
+// Only for logged in users.
+router.get("/protected", isUser, function (req, res, next) {
+  res.render("protected", { title: "Protected" });
+});
+
 module.exports = router;
