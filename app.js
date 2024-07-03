@@ -5,6 +5,7 @@ const path = require("path");
 const logger = require("morgan");
 const passport = require("passport");
 const cors = require("cors");
+const MongoStore = require("connect-mongo");
 
 require("dotenv").config();
 
@@ -52,11 +53,19 @@ require("./config/passport")(passport);
 // Requiring the passport-jwt configuration and passing in the global passport object.
 require("./config/passport-jwt")(passport);
 
+// Creates a session using MongoDB database.
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGODB_URI,
+  collectionName: "sessions",
+  autoRemove: "interval",
+  autoRemoveInterval: 10, // Minutes
+});
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    store: sessionStore,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
     },
