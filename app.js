@@ -8,12 +8,6 @@ const cors = require("cors");
 
 require("dotenv").config();
 
-// Routes
-const userRouter = require("./routes/user");
-const postRouter = require("./routes/post");
-const commentRouter = require("./routes/comment");
-const indexRouter = require("./routes/index");
-
 var app = express();
 
 // Setting origin URLS for development testing
@@ -81,6 +75,12 @@ app.use(express.static(path.join(__dirname, "public")));
 // Initializes the passport object on every request.
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Getting routes
+const userRouter = require("./routes/user");
+const postRouter = require("./routes/post");
+const commentRouter = require("./routes/comment");
+const indexRouter = require("./routes/index");
 
 // Routes
 app.use("/users", userRouter);
