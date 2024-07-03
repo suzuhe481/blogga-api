@@ -4,6 +4,7 @@ const session = require("express-session");
 const path = require("path");
 const logger = require("morgan");
 const passport = require("passport");
+const cors = require("cors");
 
 require("dotenv").config();
 
@@ -14,6 +15,39 @@ const commentRouter = require("./routes/comment");
 const indexRouter = require("./routes/index");
 
 var app = express();
+
+// Setting origin URLS for development testing
+var ORIGIN_URLS = [];
+
+// Sets origin urls for dev mode or production.
+if (process.env.DEV_MODE === "false") {
+  ORIGIN_URLS.push(process.env.PROD_ORIGIN_URL);
+} else {
+  if (process.env.DEV_ORIGIN_URL_1 !== "undefined") {
+    ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_1);
+  }
+
+  if (process.env.DEV_ORIGIN_URL_2 !== "undefined") {
+    ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_2);
+  }
+
+  if (process.env.DEV_ORIGIN_URL_3 !== "undefined") {
+    ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_3);
+  }
+
+  if (process.env.DEV_ORIGIN_URL_4 !== "undefined") {
+    ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_4);
+  }
+}
+
+// Use DEV_MODE env variable to test locally
+// app.use(cors()); // Works
+app.use(
+  cors({
+    origin: ORIGIN_URLS,
+    credentials: true,
+  })
+);
 
 // Creates connection to MongoDB
 require("./config/database");
