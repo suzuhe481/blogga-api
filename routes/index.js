@@ -6,6 +6,7 @@ const issueJWT = require("../lib/jwtUtil").issueJWT;
 const isUser = require("../lib/authenticateUtil").isUser;
 const isAdmin = require("../lib/authenticateUtil").isAdmin;
 const hasJWT = require("../lib/authenticateUtil").hasJWT;
+const { transporter, createEmail } = require("../config/nodemailer");
 
 /* GET - home page. */
 router.get("/", function (req, res, next) {
