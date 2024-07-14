@@ -28,3 +28,15 @@ exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
 exports.DELETE_ONE_USER = asyncHandler(async (req, res, next) => {
   return res.send(`DELETE - delete a single user - ${req.params.id}`);
 });
+
+// GET - Get the currently logged in user's data.
+// isUser - Middleware that checks that user is logged in.
+exports.GET_SELF_NAME = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    return res.status(200).json({
+      first_name: req.user.first_name,
+      last_name: req.user.last_name,
+    });
+  }),
+];
