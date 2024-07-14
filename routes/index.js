@@ -82,7 +82,7 @@ router.get(
   hasJWT,
   function (req, res, next) {
     return res.status(200).json({
-      msg: "You can view this protected admin resource",
+      message: "You can view this protected admin resource",
     });
   }
 );
