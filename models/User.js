@@ -12,6 +12,12 @@ const UserSchema = new Schema({
     required: true,
     minLength: 1,
   },
+  username: {
+    type: String,
+    required: true,
+    minLength: 1,
+    unique: true,
+  },
   email: {
     type: String,
     required: true,
@@ -31,6 +37,11 @@ const UserSchema = new Schema({
     required: true,
     enum: ["Member", "Admin"],
   },
+  verified: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
   posts: [
     {
       type: Schema.Types.ObjectId,
@@ -41,6 +52,12 @@ const UserSchema = new Schema({
     {
       type: Schema.Types.ObjectId,
       ref: "Comment",
+    },
+  ],
+  user_preferences: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "UserPreferences",
     },
   ],
 });
