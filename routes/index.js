@@ -27,23 +27,22 @@ router.get("/register", function (req, res, next) {
 
 /* POST - Login the user */
 // Uses passport to login and authenticate the user.
-// Returns a JWT object as a response to valid user.
 router.post(
   "/log-in",
-  passport.authenticate("local", {
-    failureRedirect: "/login",
-  }),
+  passport.authenticate("local", { failWithError: true }),
   // Below only runs after a successful login.
-  function (req, res) {
-    // Creates a tokenObject for the logged in user.
-    const tokenObject = issueJWT(req.user);
+  async function (req, res) {
 
-    // Sends token to user in JSON.
     res.status(200).json({
       success: true,
       user: req.user,
-      token: tokenObject.token,
-      expiresIn: tokenObject.expires,
+    });
+  },
+  // Below runs if there was an error logging in.
+  function (err, req, res, next) {
+    return res.status(401).json({
+      error: true,
+      message: "Login failed",
     });
   }
 );
