@@ -8,6 +8,8 @@ const isAdmin = require("../lib/authenticateUtil").isAdmin;
 const hasJWT = require("../lib/authenticateUtil").hasJWT;
 const { transporter, createEmail } = require("../config/nodemailer");
 
+const User = require("../models/User");
+
 /* GET - home page. */
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
