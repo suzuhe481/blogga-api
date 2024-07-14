@@ -48,12 +48,14 @@ router.post(
 /* GET - Logout the user */
 // Uses passport to logout the user.
 // Calls logout() on req.
-router.get("/log-out", (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    res.redirect("/");
+router.post("/log-out", (req, res, next) => {
+  console.log("Start");
+
+  req.logout();
+  req.session.destroy();
+
+  return res.status(200).json({
+    message: "Logout success",
   });
 });
 
