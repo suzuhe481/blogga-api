@@ -87,4 +87,23 @@ router.get(
   }
 );
 
+// Sends verification email to the logged in user's email address.
+router.get("/send-verification", isUser, function (req, res, next) {
+  const mailData = createEmail(req.user);
+
+  // Sending verification email.
+  transporter
+    .sendMail(mailData)
+    .then(() => {
+      console.log(`Verification email sent to: ${req.user.email}`);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+
+  return res.status(200).json({
+    message: "Verification email has been sent.",
+  });
+});
+
 module.exports = router;
