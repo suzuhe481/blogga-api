@@ -106,4 +106,18 @@ router.get("/send-verification", isUser, function (req, res, next) {
   });
 });
 
+// Verifies a logged in user's email verification link.
+// Link contains JWT which is verified by the hasJWT middleware.
+// If JWT is valid, sets the user's verified status to true.
+router.get("/verify", isUser, hasJWT, async function (req, res, next) {
+  const verifyUpdate = { verified: true };
+
+  // Set user verified to true and update user
+  await User.findByIdAndUpdate(req.user.id, verifyUpdate, {});
+
+  return res.status(200).json({
+    message: "User is verified",
+  });
+});
+
 module.exports = router;
