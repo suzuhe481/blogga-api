@@ -36,6 +36,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     enum: ["Member", "Admin"],
+    default: "Member",
   },
   verified: {
     type: Boolean,
