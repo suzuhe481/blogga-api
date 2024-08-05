@@ -55,12 +55,10 @@ const UserSchema = new Schema({
       ref: "Comment",
     },
   ],
-  user_preferences: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "UserPreferences",
-    },
-  ],
+  user_preferences: {
+    type: Schema.Types.ObjectId,
+    ref: "UserPreferences",
+  },
 });
 
 // Export module
