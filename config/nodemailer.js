@@ -14,7 +14,6 @@ module.exports.transporter = nodemailer.createTransport({
 
 // Creates an email to be sent to the given email address.
 module.exports.createEmail = (user) => {
-  console.log("creating email start");
   const userEmail = user.email;
 
   // Verification link which depends on DEV_MODE.
@@ -38,8 +37,6 @@ module.exports.createEmail = (user) => {
 
 // Creates the email template and attaches the link with JWT token.
 function createEmailTemplate(link, token) {
-  console.log("email template start");
-
   return `<!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
   <head>
