@@ -269,10 +269,4 @@ function createEmailTemplate(link, token) {
   </body>
 </html>
   `;
-
-  return `<div>
-      <p>Hello, this is an email</p> <b>Some bold text</b>
-      <p>This link will expire in 10 minutes</p>
-      <a href=${link}/${token}>Verify Account</a>
-    </div>`;
 }
