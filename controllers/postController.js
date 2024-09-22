@@ -15,9 +15,12 @@ exports.GET_ALL_POSTS = asyncHandler(async (req, res, next) => {
 
 // // GET - get a single post
 exports.GET_ONE_POST = asyncHandler(async (req, res, next) => {
-  console.log(req);
-  return res.send(`GET - get a single post - ID: ${req.params.id}`);
+  const post = await Post.findOne({ shortId: req.params.id });
+  // console.log(post);
+
+  return res.status(200).json({ post });
 });
+
 
 // // POST - create a single post
 exports.POST_ONE_POST = [
