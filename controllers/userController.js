@@ -37,6 +37,7 @@ exports.GET_SELF_NAME = [
     return res.status(200).json({
       first_name: req.user.first_name,
       last_name: req.user.last_name,
+      verified: req.user.verified,
     });
   }),
 ];
