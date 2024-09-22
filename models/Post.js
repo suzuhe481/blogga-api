@@ -32,6 +32,11 @@ const PostSchema = new Schema({
     required: true,
     default: false,
   },
+  shortId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 });
 
 // Export module
