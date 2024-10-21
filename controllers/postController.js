@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const { body, validationResult } = require("express-validator");
 
+const User = require("../models/User");
 const Post = require("../models/Post");
 
 const isUser = require("../lib/authenticateUtil").isUser;
