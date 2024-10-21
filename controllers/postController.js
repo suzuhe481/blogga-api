@@ -11,27 +11,28 @@ const { nanoid } = require("nanoid");
 // Post Routes
 // GET - get all posts
 exports.GET_ALL_POSTS = asyncHandler(async (req, res, next) => {
-  // console.log(req.query);
-
   const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
   const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
   const blogsSkipped = (currentPage - 1) * blogsPerPage;
 
   const totalBlogCount = await Post.countDocuments({});
 
-  const multiplePosts = await Post.find({})
-    .sort({ published: -1 })
-    .skip(blogsSkipped)
-    .limit(blogsPerPage)
-    .exec();
-
-  // console.log(multiplePosts);
-
   const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
 
   // If user is currently on a higher page number than what is currently available,
   // changes the currentPage to the last page.
   const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
+
+  // Note: _id: 1 is added to sort becuase MongoDB will sometimes need
+  // a field with a unique value if documents are the same.
+  // It would be possible for dates to be equal.
+  // The additional _id field helps to sort properly.
+  const multiplePosts = await Post.find({})
+    .populate("author", "first_name last_name")
+    .sort({ published: -1, _id: 1 })
+    .skip(blogsSkipped)
+    .limit(blogsPerPage)
+    .exec();
 
   return res
     .status(200)
