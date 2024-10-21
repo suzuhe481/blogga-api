@@ -46,15 +46,17 @@ exports.GET_ONE_POST = asyncHandler(async (req, res, next) => {
   return res.status(200).json({ post });
 });
 
-
 // // POST - create a single post
 exports.POST_ONE_POST = [
   isUser,
-  body("title", "Title must be filled out")
+  body("title", "Title is empty or too short")
     .trim()
     .escape()
     .isLength({ min: 3 }),
-  body("blog", "Blog must filled out").trim().escape().isLength({ min: 100 }),
+  body("blog", "Blog is empty or too short")
+    .trim()
+    .escape()
+    .isLength({ min: 50 }),
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
