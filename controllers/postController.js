@@ -115,7 +115,7 @@ exports.POST_ONE_POST = [
     } catch (err) {
       return res.status(500).json({
         error: true,
-        msg: "Could not save post to server.",
+        msg: ["Could not save post to server."],
       });
     }
   }),
