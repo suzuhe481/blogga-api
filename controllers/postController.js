@@ -100,7 +100,13 @@ exports.POST_ONE_POST = [
     });
 
     try {
+      // Saves the post
       await post.save();
+
+      // Saves the post to the User.
+      const filter = { _id: req.user._id };
+      const update = { $push: { posts: post } };
+      await User.findOneAndUpdate(filter, update, { new: true });
 
       return res.status(200).json({
         success: true,
