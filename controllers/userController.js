@@ -17,8 +17,21 @@ exports.GET_ALL_USERS = asyncHandler(async (req, res, next) => {
 
 // // GET - get a single user
 exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
-  console.log(req);
-  return res.send(`GET - get a single user - ID: ${req.params.id}`);
+  const user = await User.findById(req.params.id).exec();
+
+  // console.log(`User: ${user}`);
+
+  if (!user) {
+    return res.status(200).json({
+      error: true,
+      message: "User does not exist",
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    user: user,
+  });
 });
 
 // POST - create a single user.
