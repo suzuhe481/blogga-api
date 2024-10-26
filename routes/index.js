@@ -13,8 +13,10 @@ const sendVerificationEmail =
 const User = require("../models/User");
 
 /* GET - home page. */
-router.get("/", function (req, res, next) {
-  res.render("index", { title: "Express" });
+router.get("/", isUser, function (req, res, next) {
+  return res.status(200).json({
+    message: "Home page",
+  });
 });
 
 /* GET - Login page */
