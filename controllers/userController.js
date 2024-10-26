@@ -199,3 +199,26 @@ exports.PUT_SETTINGS = [
   }),
 ];
 
+// DELETE - Deletes the profile of currently logged in user and their posts.
+// isUser - Checks that the user is logged in.
+exports.DELETE_ONE_USER = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    // Checks IDs of logged in user and requested user to delete.
+    if (req.user._id != req.params.id) {
+      return;
+    }
+
+    // Delete all user posts and profile.
+    await Post.deleteMany({ user: req.params.id }).exec();
+    await User.findByIdAndDelete(req.params.id).exec();
+
+    // Removes user session from database.
+    await req.session.destroy();
+
+    return res.status(200).json({
+      sucess: true,
+      message: "Profile deleted.",
+    });
+  }),
+];
