@@ -2,7 +2,6 @@ var express = require("express");
 var router = express.Router();
 const passport = require("passport");
 
-const issueJWT = require("../lib/jwtUtil").issueJWT;
 const isUser = require("../lib/authenticateUtil").isUser;
 const isAdmin = require("../lib/authenticateUtil").isAdmin;
 const hasJWT = require("../lib/authenticateUtil").hasJWT;
