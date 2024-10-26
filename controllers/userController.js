@@ -163,3 +163,39 @@ exports.GET_SETTINGS = [
   }),
 ];
 
+// PUT - Updates the settings for the currently logged in user.
+// isUser - Checks that the user is logged in.
+exports.PUT_SETTINGS = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    const userPreferences = await UserPreferences.findOne(
+      {
+        user: req.user._id,
+      },
+      { _id: 1, user: 1, dark_mode: 1 }
+    ).exec();
+
+    // console.log(userPreferences);
+
+    const newDisplayNameSetting =
+      req.body.display_real_name === "real_name" ? true : false;
+
+    // Updates the "display real name" setting
+    userPreferences["display_real_name"] = newDisplayNameSetting;
+
+    // console.log(userPreferences);
+
+    // Updates the UserPreferences model with new settings.
+    const UpdatedUserPreferences = await UserPreferences.findByIdAndUpdate(
+      userPreferences._id,
+      userPreferences,
+      {}
+    );
+
+    return res.status(200).json({
+      success: true,
+      UpdatedUserPreferences: UpdatedUserPreferences,
+    });
+  }),
+];
+
