@@ -137,3 +137,29 @@ exports.GET_SELF_NAME = [
     });
   }),
 ];
+
+// GET - Gets the currently logged in user's settings
+// isUser - Checks that the user is logged in.
+exports.GET_SETTINGS = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    // Only returns the setting...
+    // display_real_name
+    const settings = await UserPreferences.findOne(
+      {
+        user: req.user._id,
+      },
+      { display_real_name: 1 }
+    ).exec();
+
+    // console.log(req.user._id);
+
+    return res.status(200).json({
+      first_name: req.user.first_name,
+      last_name: req.user.last_name,
+      id: req.user._id,
+      settings: settings,
+    });
+  }),
+];
+
