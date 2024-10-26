@@ -74,6 +74,7 @@ router.get("/protected", isUser, function (req, res, next) {
   res.render("protected", { title: "Protected" });
 });
 
+// NOT USED ANYMORE
 /* GET */
 // Only for admins. Verified with jwt and isAdmin middleware.
 // Admin Resource - Requires JWT authorization to access.
