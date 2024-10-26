@@ -74,8 +74,8 @@ app.use(
       // maxAge: 1000 * 60, // 60 seconds
       // maxAge: 1000 * 30, // 30 seconds
       secure: process.env.DEV_MODE ? false : true,
-      sameSite: "none",
-      httpOnly: true,
+      sameSite: false,
+      httpOnly: process.env.DEV_MODE ? false : true,
     },
   })
 );
