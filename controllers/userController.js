@@ -9,7 +9,8 @@ const { transporter, mailData } = require("../config/nodemailer");
 const isUser = require("../lib/authenticateUtil").isUser;
 
 // User Routes
-// GET - get all users
+// GET - get all users.
+// Public to all.
 exports.GET_ALL_USERS = asyncHandler(async (req, res, next) => {
   return res.send("GET - get all users");
 });
