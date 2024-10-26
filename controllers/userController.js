@@ -114,6 +114,8 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
   });
 });
 
+// PUT - update a single user
+// Only for own user and admin.
 exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
   return res.send(`PUT - update a single user - ID: ${req.params.id}`);
 });
