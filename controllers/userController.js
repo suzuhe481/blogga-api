@@ -1,4 +1,12 @@
 const asyncHandler = require("express-async-handler");
+const generatePassword = require("../lib/passwordUtil").generatePassword;
+
+const User = require("../models/User");
+const Post = require("../models/Post");
+const UserPreferences = require("../models/UserPreferences");
+const { transporter, mailData } = require("../config/nodemailer");
+
+const isUser = require("../lib/authenticateUtil").isUser;
 
 // User Routes
 // GET - get all users
