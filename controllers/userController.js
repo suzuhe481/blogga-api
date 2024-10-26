@@ -15,7 +15,8 @@ exports.GET_ALL_USERS = asyncHandler(async (req, res, next) => {
   return res.send("GET - get all users");
 });
 
-// // GET - get a single user
+// GET - get a single user
+// Public to all.
 exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
 
