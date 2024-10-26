@@ -35,7 +35,6 @@ router.post(
   passport.authenticate("local", { failWithError: true }),
   // Below only runs after a successful login.
   async function (req, res) {
-
     res.status(200).json({
       success: true,
       user: req.user,
@@ -45,7 +44,7 @@ router.post(
   function (err, req, res, next) {
     return res.status(401).json({
       error: true,
-      message: "Login failed",
+      message: "Invalid email or password.",
     });
   }
 );
