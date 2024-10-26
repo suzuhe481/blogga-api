@@ -120,11 +120,6 @@ exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
   return res.send(`PUT - update a single user - ID: ${req.params.id}`);
 });
 
-// // DELETE - delete a single user
-exports.DELETE_ONE_USER = asyncHandler(async (req, res, next) => {
-  return res.send(`DELETE - delete a single user - ${req.params.id}`);
-});
-
 // GET - Get the currently logged in user's data.
 // isUser - Middleware that checks that user is logged in.
 exports.GET_SELF_NAME = [
