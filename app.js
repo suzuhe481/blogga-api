@@ -76,24 +76,49 @@ const sessionStore = MongoStore.create({
   autoRemoveInterval: 10, // Minutes
 });
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    unset: "destroy", // Removes session from database
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
-      // maxAge: 1000 * 60 * 60, // 1 hour
-      // maxAge: 1000 * 60, // 60 seconds
-      // maxAge: 1000 * 30, // 30 seconds
-      secure: process.env.DEV_MODE === "true" ? false : true,
-      sameSite: process.env.DEV_MODE === "true" ? "lax" : "none",
-      httpOnly: process.env.DEV_MODE === "true" ? false : true,
-    },
-  })
-);
+// Development session
+if (process.env.DEV_MODE === "true") {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: false,
+        sameSite: "lax",
+        httpOnly: false,
+      },
+    })
+  );
+}
+// Production session
+else {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        domain: process.env.PROD_ORIGIN_URL,
+      },
+    })
+  );
+}
 
 // Logging the request
 app.use((req, res, next) => {
