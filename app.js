@@ -44,6 +44,14 @@ app.use(
   })
 );
 
+console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
+
+console.log(`DEV MODE: ${process.env.DEV_MODE}`);
+
+if (process.env.DEV_MODE === "true") {
+  console.log("dev mode is true as string");
+}
+
 // Creates connection to MongoDB
 require("./config/database");
 
@@ -79,6 +87,15 @@ app.use(
     },
   })
 );
+
+// Debugging
+app.use((req, res, next) => {
+  console.log("Request Cookies:", req.cookies);
+  res.on("finish", () => {
+    console.log("Response Headers:", res.getHeaders());
+  });
+  next();
+});
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
