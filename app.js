@@ -113,8 +113,8 @@ else {
         // maxAge: 1000 * 30, // 30 seconds
         secure: true,
         sameSite: "none",
-        httpOnly: true,
-        domain: process.env.PROD_ORIGIN_URL,
+        httpOnly: false,
+        path: "/",
       },
     })
   );
