@@ -42,7 +42,7 @@ if (process.env.DEV_MODE === "false") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: ORIGIN_URLS,
+    origin: "*",
     credentials: true,
   })
 );
