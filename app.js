@@ -42,7 +42,7 @@ if (process.env.DEV_MODE === "false") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: ORIGIN_URLS,
+    origin: "https://ff520800.blogga-frontend.pages.dev/",
     credentials: true,
   })
 );
@@ -93,6 +93,7 @@ if (process.env.DEV_MODE === "true") {
         secure: false,
         sameSite: "lax",
         httpOnly: false,
+        path: "/",
       },
     })
   );
