@@ -5,11 +5,14 @@ const path = require("path");
 const logger = require("morgan");
 const passport = require("passport");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 
 require("dotenv").config();
 
 var app = express();
+
+app.use(cookieParser());
 
 // Setting origin URLS for development testing
 var ORIGIN_URLS = [];
@@ -52,6 +55,10 @@ if (process.env.DEV_MODE === "true") {
   console.log("dev mode is true as string");
 }
 
+if (process.env.DEV_MODE === "false") {
+  console.log("dev mode is false as string");
+}
+
 // Creates connection to MongoDB
 require("./config/database");
 
@@ -87,6 +94,13 @@ app.use(
     },
   })
 );
+
+// Logging the request
+app.use((req, res, next) => {
+  console.log("Request Headers:", req.headers);
+  console.log("Request Cookies:", req.cookies);
+  next();
+});
 
 // Debugging
 app.use((req, res, next) => {
