@@ -37,6 +37,8 @@ router.post(
   async function (req, res) {
     console.log("Response Headers Logging In: ", res.getHeaders());
 
+    console.log("Session Data: ", req.session);
+
     res.status(200).json({
       success: true,
       user: req.user,
