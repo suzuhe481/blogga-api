@@ -7,6 +7,7 @@ const passport = require("passport");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
+const { createProxyMiddleware } = require("http-proxy-middleware");
 
 require("dotenv").config();
 
@@ -136,6 +137,18 @@ else {
       },
     })
   );
+}
+
+// Proxy middleware during production
+if (process.env.DEV_MODE !== "true") {
+  console.log("Proxy is made");
+
+  const proxy = createProxyMiddleware({
+    target: process.env.PROD_ORIGIN_URL,
+    changeOrigin: true,
+  });
+
+  app.use("/api", proxy);
 }
 
 // Logging the request
