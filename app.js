@@ -146,6 +146,9 @@ if (process.env.DEV_MODE !== "true") {
   const proxy = createProxyMiddleware({
     target: process.env.PROD_ORIGIN_URL,
     changeOrigin: true,
+    pathRewrite: {
+      "^/api": "",
+    },
   });
 
   app.use("/api", proxy);
