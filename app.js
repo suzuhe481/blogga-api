@@ -42,24 +42,24 @@ if (process.env.DEV_MODE === "false") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: "https://ff520800.blogga-frontend.pages.dev",
+    origin: ORIGIN_URLS,
     credentials: true,
   })
 );
 
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Credentials", true);
-  res.header(
-    "Access-Control-Allow-Origin",
-    "https://ff520800.blogga-frontend.pages.dev"
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie"
-  );
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  next();
-});
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Credentials", true);
+//   res.header(
+//     "Access-Control-Allow-Origin",
+//     "https://ff520800.blogga-frontend.pages.dev"
+//   );
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie"
+//   );
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//   next();
+// });
 
 console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 
