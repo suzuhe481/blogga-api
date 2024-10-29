@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === "prod") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: process.env.PROD_ORIGIN_URL,
+    origin: ORIGIN_URLS,
     credentials: true,
   })
 );
@@ -130,7 +130,7 @@ const sessionStore = MongoStore.create({
 });
 
 // Production session
-if (process.env.NODE_ENV) {
+if (process.env.NODE_ENV === "prod") {
   console.log("session in: production environment");
   // app.set("trust proxy", 1);
 
