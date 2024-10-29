@@ -20,7 +20,7 @@ var ORIGIN_URLS = [];
 
 // Sets origin urls for dev mode or production.
 if (process.env.DEV_MODE === "false") {
-  ORIGIN_URLS.push(process.env.PROD_ORIGIN_URL);
+  ORIGIN_URLS.push("https://9b1b9415.blogga-frontend.pages.dev/");
 } else {
   if (process.env.DEV_ORIGIN_URL_1 !== "undefined") {
     ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_1);
@@ -43,7 +43,7 @@ if (process.env.DEV_MODE === "false") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: ORIGIN_URLS,
+    origin: "https://9b1b9415.blogga-frontend.pages.dev/",
     credentials: true,
   })
 );
@@ -51,7 +51,10 @@ app.use(
 if (process.env.DEV_MODE !== "true") {
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Credentials", true);
-    res.header("Access-Control-Allow-Origin", process.env.PROD_ORIGIN_URL);
+    res.header(
+      "Access-Control-Allow-Origin",
+      "https://9b1b9415.blogga-frontend.pages.dev/"
+    );
     res.header(
       "Access-Control-Allow-Headers",
       "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie"
@@ -143,7 +146,7 @@ if (process.env.DEV_MODE !== "true") {
   console.log("Proxy is made");
 
   const proxy = createProxyMiddleware({
-    target: process.env.PROD_ORIGIN_URL,
+    target: "https://9b1b9415.blogga-frontend.pages.dev/",
     changeOrigin: true,
     pathRewrite: {
       "^/api": "",
