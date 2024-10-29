@@ -41,47 +41,47 @@ if (process.env.NODE_ENV === "prod") {
 
 // Use DEV_MODE env variable to test locally
 // app.use(cors()); // Works
-app.use(
-  cors({
-    origin: ORIGIN_URLS,
-    credentials: true,
-  })
-);
 // app.use(
 //   cors({
-//     origin: function (origin, callback) {
-//       console.log("origin start");
-
-//       // Allow requests without an origin
-//       if (!origin) {
-//         console.log("Allowing request with no origin");
-//         return callback(null, true);
-//       }
-
-//       // Check if the origin is allowed
-//       if (ORIGIN_URLS.indexOf(origin) === -1) {
-//         console.log("Not allowed at specified origin by CORS");
-//         return callback(new Error("Not allowed by CORS"), false);
-//       }
-
-//       console.log("origin end");
-
-//       callback(null, true); // Allow the origin
-//     },
+//     origin: ORIGIN_URLS,
 //     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     allowedHeaders: [
-//       "Origin",
-//       "X-Requested-With",
-//       "Content-Type",
-//       "Accept",
-//       "Authorization",
-//       "X-HTTP-Method-Override",
-//       "Set-Cookie",
-//       "Cookie",
-//     ],
 //   })
 // );
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      console.log("origin start");
+
+      // Allow requests without an origin
+      if (!origin) {
+        console.log("Allowing request with no origin");
+        return callback(null, true);
+      }
+
+      // Check if the origin is allowed
+      if (ORIGIN_URLS.indexOf(origin) === -1) {
+        console.log("Not allowed at specified origin by CORS");
+        return callback(new Error("Not allowed by CORS"), false);
+      }
+
+      console.log("origin end");
+
+      callback(null, true); // Allow the origin
+    },
+    //     credentials: true,
+    //     methods: ["GET", "POST", "PUT", "DELETE"],
+    //     allowedHeaders: [
+    //       "Origin",
+    //       "X-Requested-With",
+    //       "Content-Type",
+    //       "Accept",
+    //       "Authorization",
+    //       "X-HTTP-Method-Override",
+    //       "Set-Cookie",
+    //       "Cookie",
+    //     ],
+  })
+);
 
 // if (process.env.DEV_MODE === "prod") {
 //   app.use(function (req, res, next) {
