@@ -149,7 +149,7 @@ if (process.env.NODE_ENV) {
         // maxAge: 1000 * 30, // 30 seconds
         secure: true,
         sameSite: "none",
-        httpOnly: false,
+        httpOnly: true,
         path: "/",
       },
     })
