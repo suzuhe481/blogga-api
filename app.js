@@ -40,62 +40,62 @@ if (process.env.DEV_MODE === "false") {
 }
 
 // Use DEV_MODE env variable to test locally
-// app.use(cors()); // Works
-app.use(
-  cors({
-    origin: process.env.PROD_ORIGIN_URL,
-    // origin: function (origin, callback) {
-    //   console.log("origin start");
+app.use(cors()); // Works
+// app.use(
+//   cors({
+//     origin: process.env.PROD_ORIGIN_URL,
+// origin: function (origin, callback) {
+//   console.log("origin start");
 
-    //   // Allow requests without an origin
-    //   if (!origin) {
-    //     console.log("Allowing request with no origin");
-    //     return callback(null, true);
-    //   }
+//   // Allow requests without an origin
+//   if (!origin) {
+//     console.log("Allowing request with no origin");
+//     return callback(null, true);
+//   }
 
-    //   // Check if the origin is allowed
-    //   if (ORIGIN_URLS.indexOf(origin) === -1) {
-    //     console.log("NOt allowed at specified origin by CORS");
-    //     return callback(new Error("Not allowed by CORS"), false);
-    //   }
+//   // Check if the origin is allowed
+//   if (ORIGIN_URLS.indexOf(origin) === -1) {
+//     console.log("NOt allowed at specified origin by CORS");
+//     return callback(new Error("Not allowed by CORS"), false);
+//   }
 
-    //   console.log("origin end");
+//   console.log("origin end");
 
-    //   callback(null, true); // Allow the origin
-    // },
-    // origin: function (origin, callback) {
-    //   console.log("origin start");
-    //   // Allows requests with no origin (for mobile apps or curl requests)
-    //   if (!origin) {
-    //     console.log("Allowing request with no origin");
-    //     return callback(null, true);
-    //   }
+//   callback(null, true); // Allow the origin
+// },
+// origin: function (origin, callback) {
+//   console.log("origin start");
+//   // Allows requests with no origin (for mobile apps or curl requests)
+//   if (!origin) {
+//     console.log("Allowing request with no origin");
+//     return callback(null, true);
+//   }
 
-    //   if (ORIGIN_URLS.indexOf(origin) === -1) {
-    //     console.log("NOt allowed at specified origin");
-    //     const msg =
-    //       "A message saying the CORS policy doesn't allow access from the specified origin";
-    //     return callback(new Error(msg), false);
-    //   }
+//   if (ORIGIN_URLS.indexOf(origin) === -1) {
+//     console.log("NOt allowed at specified origin");
+//     const msg =
+//       "A message saying the CORS policy doesn't allow access from the specified origin";
+//     return callback(new Error(msg), false);
+//   }
 
-    //   console.log("origin end");
+//   console.log("origin end");
 
-    //   return callback(null, true);
-    // },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: [
-      "Origin",
-      "X-Requested-With",
-      "Content-Type",
-      "Accept",
-      "Authorization",
-      "X-HTTP-Method-Override",
-      "Set-Cookie",
-      "Cookie",
-    ],
-  })
-);
+//   return callback(null, true);
+// },
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: [
+//       "Origin",
+//       "X-Requested-With",
+//       "Content-Type",
+//       "Accept",
+//       "Authorization",
+//       "X-HTTP-Method-Override",
+//       "Set-Cookie",
+//       "Cookie",
+//     ],
+//   })
+// );
 
 // if (process.env.DEV_MODE !== "true") {
 //   app.use(function (req, res, next) {
