@@ -165,7 +165,8 @@ if (process.env.DEV_MODE === "true") {
 }
 // Production session
 else {
-  app.set("trust proxy", 1);
+  console.log("production session");
+  // app.set("trust proxy", 1);
 
   app.use(
     session({
