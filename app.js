@@ -20,7 +20,7 @@ var ORIGIN_URLS = [];
 
 // Sets origin urls for dev mode or production.
 if (process.env.DEV_MODE === "false") {
-  ORIGIN_URLS.push("https://9b1b9415.blogga-frontend.pages.dev");
+  ORIGIN_URLS.push(process.env.PROD_ORIGIN_URL);
 } else {
   if (process.env.DEV_ORIGIN_URL_1 !== "undefined") {
     ORIGIN_URLS.push(process.env.DEV_ORIGIN_URL_1);
@@ -43,8 +43,32 @@ if (process.env.DEV_MODE === "false") {
 // app.use(cors()); // Works
 app.use(
   cors({
-    origin: "https://9b1b9415.blogga-frontend.pages.dev",
+    origin: function (origin, callback) {
+      // Allows requests with no origin (for mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (ORIGIN_URLS.indexOf(origin) === -1) {
+        const msg =
+          "A message saying the CORS policy doesn't allow access from the specified origin";
+        return callback(new Error(msg), false);
+      }
+
+      return callback(null, true);
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "X-HTTP-Method-Override",
+      "Set-Cookie",
+      "Cookie",
+    ],
   })
 );
 
@@ -53,7 +77,7 @@ app.use(
 //     res.header("Access-Control-Allow-Credentials", true);
 //     res.header(
 //       "Access-Control-Allow-Origin",
-//       "https://9b1b9415.blogga-frontend.pages.dev"
+//       process.env.PROD_ORIGIN_URL
 //     );
 //     res.header(
 //       "Access-Control-Allow-Headers",
@@ -146,7 +170,7 @@ if (process.env.DEV_MODE !== "true") {
   console.log("Proxy is made");
 
   const proxy = createProxyMiddleware({
-    target: "https://9b1b9415.blogga-frontend.pages.dev",
+    target: process.env.PROD_ORIGIN_URL,
     changeOrigin: true,
     pathRewrite: {
       "^/api": "",
