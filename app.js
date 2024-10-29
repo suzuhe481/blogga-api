@@ -48,19 +48,18 @@ app.use(
   })
 );
 
-// app.use(function (req, res, next) {
-//   res.header("Access-Control-Allow-Credentials", true);
-//   res.header(
-//     "Access-Control-Allow-Origin",
-//     "https://ff520800.blogga-frontend.pages.dev"
-//   );
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie"
-//   );
-//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-//   next();
-// });
+if (process.env.DEV_MODE !== "true") {
+  app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header("Access-Control-Allow-Origin", process.env.PROD_ORIGIN_URL);
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie"
+    );
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+    next();
+  });
+}
 
 console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 
