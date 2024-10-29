@@ -44,16 +44,21 @@ if (process.env.DEV_MODE === "false") {
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("origin start");
       // Allows requests with no origin (for mobile apps or curl requests)
       if (!origin) {
+        console.log("Allowing request with no origin");
         return callback(null, true);
       }
 
       if (ORIGIN_URLS.indexOf(origin) === -1) {
+        console.log("NOt allowed at specified origin");
         const msg =
           "A message saying the CORS policy doesn't allow access from the specified origin";
         return callback(new Error(msg), false);
       }
+
+      console.log("origin end");
 
       return callback(null, true);
     },
