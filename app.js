@@ -229,19 +229,19 @@ else {
 }
 
 // Proxy middleware during production
-if (process.env.NODE_ENV !== "prod") {
-  console.log("Production environment: Proxy is made");
+// if (process.env.NODE_ENV !== "prod") {
+//   console.log("Production environment: Proxy is made");
 
-  const proxy = createProxyMiddleware({
-    target: process.env.PROD_ORIGIN_URL,
-    changeOrigin: true,
-    pathRewrite: {
-      "^/api": "",
-    },
-  });
+//   const proxy = createProxyMiddleware({
+//     target: process.env.PROD_ORIGIN_URL,
+//     changeOrigin: true,
+//     pathRewrite: {
+//       "^/api": "",
+//     },
+//   });
 
-  app.use("/api", proxy);
-}
+//   app.use("/api", proxy);
+// }
 
 // Logging the request
 app.use((req, res, next) => {
