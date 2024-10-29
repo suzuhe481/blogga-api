@@ -19,7 +19,7 @@ app.use(cookieParser());
 var ORIGIN_URLS = [];
 
 // Sets origin urls for dev mode or production.
-if (process.env.DEV_MODE === "false") {
+if (process.env.NODE_ENV === "prod") {
   ORIGIN_URLS.push(process.env.PROD_ORIGIN_URL);
 } else {
   if (process.env.DEV_ORIGIN_URL_1 !== "undefined") {
@@ -116,13 +116,14 @@ app.use(cors()); // Works
 console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 
 console.log(`DEV MODE: ${process.env.DEV_MODE}`);
+console.log(`NODE ENV: ${process.env.NODE_ENV}`);
 
-if (process.env.DEV_MODE === "true") {
-  console.log("dev mode is true as string");
+if (process.env.NODE_ENV === "prod") {
+  console.log("environment: production");
 }
 
-if (process.env.DEV_MODE === "false") {
-  console.log("dev mode is false as string");
+if (process.env.NODE_ENV === "dev") {
+  console.log("environment: development");
 }
 
 // Creates connection to MongoDB
@@ -142,31 +143,9 @@ const sessionStore = MongoStore.create({
   autoRemoveInterval: 10, // Minutes
 });
 
-// Development session
-if (process.env.DEV_MODE === "true") {
-  app.use(
-    session({
-      secret: process.env.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      store: sessionStore,
-      unset: "destroy", // Removes session from database
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
-        // maxAge: 1000 * 60 * 60, // 1 hour
-        // maxAge: 1000 * 60, // 60 seconds
-        // maxAge: 1000 * 30, // 30 seconds
-        secure: false,
-        sameSite: "lax",
-        httpOnly: false,
-        path: "/",
-      },
-    })
-  );
-}
 // Production session
-else {
-  console.log("production session");
+if (process.env.NODE_ENV) {
+  console.log("session in: production environment");
   // app.set("trust proxy", 1);
 
   app.use(
@@ -189,11 +168,34 @@ else {
       },
     })
   );
+} // Development session
+else {
+  console.log("session in: development environment");
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: false,
+        sameSite: "lax",
+        httpOnly: false,
+        path: "/",
+      },
+    })
+  );
 }
 
 // Proxy middleware during production
-if (process.env.DEV_MODE !== "true") {
-  console.log("Proxy is made");
+if (process.env.NODE_ENV !== "prod") {
+  console.log("Production environment: Proxy is made");
 
   const proxy = createProxyMiddleware({
     target: process.env.PROD_ORIGIN_URL,
