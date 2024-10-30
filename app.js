@@ -98,7 +98,7 @@ app.use(
 //   });
 // }
 
-app.options("*", cors());
+// app.options("*", cors());
 
 console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 
