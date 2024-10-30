@@ -68,7 +68,7 @@ app.use(
 
       callback(null, true); // Allow the origin
     },
-    //     credentials: true,
+    credentials: true,
     //     methods: ["GET", "POST", "PUT", "DELETE"],
     //     allowedHeaders: [
     //       "Origin",
