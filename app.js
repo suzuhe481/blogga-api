@@ -150,6 +150,7 @@ if (process.env.NODE_ENV === "prod") {
         sameSite: "none",
         httpOnly: true,
         path: "/",
+        domain: ".myblogga.com",
       },
     })
   );
