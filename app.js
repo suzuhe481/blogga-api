@@ -132,7 +132,7 @@ const sessionStore = MongoStore.create({
 // Production session
 if (process.env.NODE_ENV === "prod") {
   console.log("session in: production environment");
-  // app.set("trust proxy", 1);
+  app.set("trust proxy", 1);
 
   app.use(
     session({
