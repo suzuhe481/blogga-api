@@ -39,6 +39,8 @@ router.post(
 
     console.log("Session Data: ", req.session);
 
+    res.setHeader("Set-Cookie", req.session.cookie);
+
     res.status(200).json({
       success: true,
       user: req.user,
