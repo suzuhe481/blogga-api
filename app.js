@@ -49,26 +49,27 @@ if (process.env.NODE_ENV === "prod") {
 // );
 app.use(
   cors({
-    origin: "https://preview.myblogga.com",
-    // origin: function (origin, callback) {
-    //   console.log("origin start");
+    // origin: "https://preview.myblogga.com",
+    // Dynamically sets origin
+    origin: function (origin, callback) {
+      console.log("origin start");
 
-    //   // Allow requests without an origin
-    //   if (!origin) {
-    //     console.log("Allowing request with no origin");
-    //     return callback(null, true);
-    //   }
+      // Allow requests without an origin
+      if (!origin) {
+        console.log("Allowing request with no origin");
+        return callback(null, true);
+      }
 
-    //   // Check if the origin is allowed
-    //   if (ORIGIN_URLS.indexOf(origin) === -1) {
-    //     console.log("Not allowed at specified origin by CORS");
-    //     return callback(new Error("Not allowed by CORS"), false);
-    //   }
+      // Check if the origin is allowed
+      if (ORIGIN_URLS.indexOf(origin) === -1) {
+        console.log("Not allowed at specified origin by CORS");
+        return callback(new Error("Not allowed by CORS"), false);
+      }
 
-    //   console.log("origin end");
+      console.log("origin end");
 
-    //   callback(null, true); // Allow the origin
-    // },
+      callback(null, true); // Allow the origin
+    },
     credentials: true,
     //     methods: ["GET", "POST", "PUT", "DELETE"],
     //     allowedHeaders: [
