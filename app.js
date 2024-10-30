@@ -96,6 +96,8 @@ app.use(
 //   });
 // }
 
+app.options("*", cors());
+
 console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 
 console.log(`DEV MODE: ${process.env.DEV_MODE}`);
