@@ -160,7 +160,7 @@ if (process.env.NODE_ENV === "prod") {
 else {
   console.log("session in: development environment");
 
-  app.set("trust proxy", 1);
+  // app.set("trust proxy", 1);
 
   app.use(
     session({
@@ -175,7 +175,7 @@ else {
         // maxAge: 1000 * 60, // 60 seconds
         // maxAge: 1000 * 30, // 30 seconds
         secure: false,
-        sameSite: "none",
+        sameSite: "lax",
         httpOnly: true,
         path: "/",
       },
