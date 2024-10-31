@@ -174,7 +174,7 @@ else {
         // maxAge: 1000 * 30, // 30 seconds
         secure: false,
         sameSite: "lax",
-        httpOnly: false,
+        httpOnly: true,
         path: "/",
       },
     })
