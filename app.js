@@ -160,7 +160,7 @@ if (process.env.NODE_ENV === "prod") {
 else {
   console.log("session in: development environment");
 
-  app.set("trust proxy", 1);
+  // app.set("trust proxy", 1);
 
   app.use(
     session({
