@@ -120,4 +120,36 @@ router.get("/verify", isUser, hasJWT, async function (req, res, next) {
   });
 });
 
+// Route that checks if a given email is already taken by another user.
+router.get("/check-email/:email", async function (req, res, next) {
+  // RegExp to search case insensitive
+  const emailRegex = new RegExp(`^${req.params.email}$`, "i");
+
+  // Checks if email has already been used.
+  const user = await User.findOne({ email: { $regex: emailRegex } }).exec();
+
+  const emailAvailable = user ? false : true;
+
+  return res.status(200).json({
+    emailAvailable: emailAvailable,
+  });
+});
+
+// Route that checks if a given username is already taken by another user.
+router.get("/check-username/:username", async function (req, res, next) {
+  // RegExp to search case insensitive
+  const usernameRegex = new RegExp(`^${req.params.username}$`, "i");
+
+  // Checks if username has already been used.
+  const user = await User.findOne({
+    username: { $regex: usernameRegex },
+  }).exec();
+
+  const usernameAvailable = user ? false : true;
+
+  return res.status(200).json({
+    usernameAvailable: usernameAvailable,
+  });
+});
+
 module.exports = router;
