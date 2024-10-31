@@ -156,13 +156,10 @@ if (process.env.NODE_ENV === "prod") {
       },
     })
   );
-} // Development session
-else {
-  console.log("session in: development environment");
-
-  if (process.env.BACKEND_LOCAL === "false") {
-    app.set("trust proxy", 1);
-  }
+}
+// Hosted Development session
+else if (process.env.NODE_ENV === "hosted_dev") {
+  app.set("trust proxy", 1);
 
   app.use(
     session({
@@ -176,8 +173,32 @@ else {
         // maxAge: 1000 * 60 * 60, // 1 hour
         // maxAge: 1000 * 60, // 60 seconds
         // maxAge: 1000 * 30, // 30 seconds
-        secure: process.env.BACKEND_LOCAL === "true" ? false : true,
-        sameSite: process.env.BACKEND_LOCAL === "true" ? "lax" : "none",
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        path: "/",
+      },
+    })
+  );
+}
+// Local Development session
+else {
+  console.log("session in: development environment");
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: false,
+        sameSite: "lax",
         httpOnly: true,
         path: "/",
       },
