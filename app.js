@@ -174,7 +174,7 @@ else {
         // maxAge: 1000 * 60 * 60, // 1 hour
         // maxAge: 1000 * 60, // 60 seconds
         // maxAge: 1000 * 30, // 30 seconds
-        secure: false,
+        secure: process.env.FRONT_END_ENV === "dev" ? false : true,
         sameSite: process.env.FRONT_END_ENV === "dev" ? "lax" : "none",
         httpOnly: true,
         path: "/",
