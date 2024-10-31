@@ -35,12 +35,6 @@ router.post(
   passport.authenticate("local", { failWithError: true }),
   // Below only runs after a successful login.
   async function (req, res) {
-    console.log("Response Headers Logging In: ", res.getHeaders());
-
-    console.log("Session Data: ", req.session);
-
-    // res.setHeader("Set-Cookie", req.session.cookie);
-
     res.status(200).json({
       success: true,
       user: req.user,
