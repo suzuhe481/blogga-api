@@ -71,7 +71,6 @@ console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
 // Logging environment variables
 console.log(`DEV MODE: ${process.env.DEV_MODE}`);
 console.log(`NODE ENV: ${process.env.NODE_ENV}`);
-console.log(`BACKEND LOCAL: ${process.env.BACKEND_LOCAL}`);
 
 // Creates connection to MongoDB
 require("./config/database");
