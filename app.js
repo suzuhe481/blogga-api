@@ -160,7 +160,9 @@ if (process.env.NODE_ENV === "prod") {
 else {
   console.log("session in: development environment");
 
-  // app.set("trust proxy", 1);
+  if (process.env.BACKEND_LOCAL === "false") {
+    app.set("trust proxy", 1);
+  }
 
   app.use(
     session({
@@ -174,8 +176,8 @@ else {
         // maxAge: 1000 * 60 * 60, // 1 hour
         // maxAge: 1000 * 60, // 60 seconds
         // maxAge: 1000 * 30, // 30 seconds
-        secure: process.env.FRONT_END_ENV === "dev" ? false : true,
-        sameSite: process.env.FRONT_END_ENV === "dev" ? "lax" : "none",
+        secure: process.env.BACKEND_LOCAL === "true" ? false : true,
+        sameSite: process.env.BACKEND_LOCAL === "true" ? "lax" : "none",
         httpOnly: true,
         path: "/",
       },
