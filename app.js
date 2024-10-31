@@ -173,7 +173,7 @@ else {
         // maxAge: 1000 * 60, // 60 seconds
         // maxAge: 1000 * 30, // 30 seconds
         secure: false,
-        sameSite: "lax",
+        sameSite: "none",
         httpOnly: true,
         path: "/",
       },
