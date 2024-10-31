@@ -135,4 +135,21 @@ router.get("/check-email/:email", async function (req, res, next) {
   });
 });
 
+// Route that checks if a given username is already taken by another user.
+router.get("/check-username/:username", async function (req, res, next) {
+  // RegExp to search case insensitive
+  const usernameRegex = new RegExp(`^${req.params.username}$`, "i");
+
+  // Checks if username has already been used.
+  const user = await User.findOne({
+    username: { $regex: usernameRegex },
+  }).exec();
+
+  const usernameAvailable = user ? false : true;
+
+  return res.status(200).json({
+    usernameAvailable: usernameAvailable,
+  });
+});
+
 module.exports = router;
