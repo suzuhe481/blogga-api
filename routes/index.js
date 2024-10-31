@@ -44,7 +44,7 @@ router.post(
   function (err, req, res, next) {
     return res.status(401).json({
       error: true,
-      message: "Invalid email or password.",
+      message: ["Invalid email or password."],
     });
   }
 );
