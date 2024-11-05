@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Post = require("../models/Post");
 const UserPreferences = require("../models/UserPreferences");
 const { transporter, mailData } = require("../config/nodemailer");
+const { validatePassword } = require("../lib/passwordUtil");
 
 const isUser = require("../lib/authenticateUtil").isUser;
 
