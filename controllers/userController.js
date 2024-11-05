@@ -117,9 +117,9 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
 
 // PUT - update a single user
 // Only for own user and admin.
-exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
-  return res.send(`PUT - update a single user - ID: ${req.params.id}`);
-});
+// exports.PUT_ONE_USER = asyncHandler(async (req, res, next) => {
+//   return res.send(`PUT - update a single user - ID: ${req.params.id}`);
+// });
 
 // GET - Get the currently logged in user's data.
 // isUser - Middleware that checks that user is logged in.
@@ -141,20 +141,19 @@ exports.GET_SETTINGS = [
   asyncHandler(async (req, res, next) => {
     // Only returns the setting...
     // display_real_name
-    const settings = await UserPreferences.findOne(
+    const preferences = await UserPreferences.findOne(
       {
         user: req.user._id,
       },
       { display_real_name: 1 }
     ).exec();
 
-    // console.log(req.user._id);
-
     return res.status(200).json({
       first_name: req.user.first_name,
       last_name: req.user.last_name,
+      username: req.user.username,
       id: req.user._id,
-      settings: settings,
+      preferences: preferences,
     });
   }),
 ];
@@ -164,50 +163,179 @@ exports.GET_SETTINGS = [
 exports.PUT_SETTINGS = [
   isUser,
   asyncHandler(async (req, res, next) => {
-    const userPreferences = await UserPreferences.findOne(
-      {
-        user: req.user._id,
-      },
-      { _id: 1, user: 1, dark_mode: 1 }
-    ).exec();
+    try {
+      // const user = await User.findById(req.user._id).exec();
+      const userPreferences = await UserPreferences.findOne(
+        {
+          user: req.user._id,
+        },
+        { _id: 1, user: 1, dark_mode: 1 }
+      ).exec();
 
-    // console.log(userPreferences);
+      // Makes sure that only the allowed fields are included in the updatePreferencesData object.
+      // This prevents users from adding their own fields.
+      const newPreferences = req.body.newPreferences;
+      newPreferences["display_real_name"] =
+        newPreferences["display_real_name"] === "real_name" ? true : false; // Turns the display_real_name field into a boolean.
+      const updatePreferencesData = {};
+      const allowedPreferencesFields = ["display_real_name"];
+      for (const field of allowedPreferencesFields) {
+        if (newPreferences[field] !== undefined) {
+          updatePreferencesData[field] = newPreferences[field];
+        }
+      }
 
-    const newDisplayNameSetting =
-      req.body.display_real_name === "real_name" ? true : false;
+      // Makes sure that only the allowed fields are included in the updateSettingsData object.
+      // This prevents users from adding their own fields.
+      const newSettings = req.body.newSettings;
+      const updateSettingsData = {};
+      const allowedSettingsFields = ["first_name", "last_name", "username"];
+      for (const field of allowedSettingsFields) {
+        if (newSettings[field] !== undefined) {
+          updateSettingsData[field] = newSettings[field];
+        }
+      }
 
-    // Updates the "display real name" setting
-    userPreferences["display_real_name"] = newDisplayNameSetting;
+      const usernameIsTaken = await User.findOne({
+        username: updateSettingsData["username"],
+      }).exec();
 
-    // console.log(userPreferences);
+      // Username belongs to different user.
+      // This also allows settings to be saved if the user is saving with the same username.
+      if (!usernameIsTaken.equals(req.user)) {
+        return res.status(401).json({
+          error: true,
+          message: "Couldn't change username: Username is taken.",
+        });
+      }
 
-    // Updates the UserPreferences model with new settings.
-    const UpdatedUserPreferences = await UserPreferences.findByIdAndUpdate(
-      userPreferences._id,
-      userPreferences,
-      {}
+      // Updates the UserPreferences model with new preferences.
+      await UserPreferences.findByIdAndUpdate(
+        userPreferences._id,
+        { $set: updatePreferencesData },
+        { new: true, runValidators: true }
+      );
+
+      // Updates the User with new settings.
+      // new: true => option to return the updated document.
+      // runValidators: true => Ensures that validation rules on model are enforces
+      await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: updateSettingsData },
+        { new: true, runValidators: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }),
+];
+
+// PUT - Updates the logged in user's email.
+exports.PUT_EMAIL = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.user._id).exec();
+
+    const newEmail = req.body.email;
+    const confirmPassword = req.body.emailPassword;
+
+    const validPassword = await validatePassword(
+      confirmPassword,
+      req.user.password
     );
 
-    return res.status(200).json({
-      success: true,
-      UpdatedUserPreferences: UpdatedUserPreferences,
-    });
+    if (!validPassword) {
+      return res.status(401).json({
+        error: true,
+        message: "Couldn't change email: Invalid password.",
+      });
+    } else {
+      const updateEmail = { $set: { email: newEmail } };
+
+      const result = await User.findByIdAndUpdate(req.user._id, updateEmail, {
+        new: true,
+        runValidators: true,
+      });
+
+      return res.status(200).json({
+        sucess: true,
+        message: "Email successfully changed.",
+      });
+    }
+  }),
+];
+
+// PUT - Updates the logged in user's password.
+exports.PUT_PASSWORD = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    // const user = await User.findById(req.params.id).exec();
+
+    const oldPassword = req.body.oldPassword;
+    const newPassword = req.body.newPassword;
+
+    // Given new password is too short.
+    if (newPassword.length < 8) {
+      return res.status(401).json({
+        error: true,
+        message: "Couldn't change password: New password is too short.",
+      });
+    }
+
+    // Check if old password confirmation matches.
+    const validPassword = await validatePassword(
+      oldPassword,
+      req.user.password
+    );
+
+    // New password and password confirm do not match.
+    if (!validPassword) {
+      return res.status(401).json({
+        error: true,
+        message: "Couldn't change password: Invalid password.",
+      });
+    } else {
+      // Changing password
+
+      // Creates a hashed password
+      const hashedPassword = await generatePassword(newPassword);
+
+      const updatePassword = { $set: { password: hashedPassword } };
+
+      await User.findByIdAndUpdate(req.user._id, updatePassword, {
+        new: true,
+        runValidators: true,
+      });
+
+      return res.status(200).json({
+        sucess: true,
+        message: "Password successfully changed.",
+      });
+    }
   }),
 ];
 
 // DELETE - Deletes the profile of currently logged in user and their posts.
+// The logged in user is identified by the current user session based on req.user.
 // isUser - Checks that the user is logged in.
 exports.DELETE_ONE_USER = [
   isUser,
   asyncHandler(async (req, res, next) => {
     // Checks IDs of logged in user and requested user to delete.
-    if (req.user._id != req.params.id) {
-      return;
-    }
+    // if (req.user._id != req.params.id) {
+    //   return;
+    // }
 
-    // Delete all user posts and profile.
-    await Post.deleteMany({ user: req.params.id }).exec();
-    await User.findByIdAndDelete(req.params.id).exec();
+    // Get the user ID from the user session.
+    const userID = req.user._id;
+
+    // Delete order - Posts, Preferences, User.
+    await Post.deleteMany({ user: userID }).exec();
+    await User.findByIdAndDelete(userID).exec();
 
     // Removes user session from database.
     await req.session.destroy();
