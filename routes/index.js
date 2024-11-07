@@ -5,6 +5,7 @@ const passport = require("passport");
 const isUser = require("../lib/authenticateUtil").isUser;
 const isAdmin = require("../lib/authenticateUtil").isAdmin;
 const hasJWT = require("../lib/authenticateUtil").hasJWT;
+const isVerified = require("../lib/authenticateUtil").isVerified;
 
 const sendVerificationEmail =
   require("../lib/sendVerificationEmailUtil").sendVerificationEmail;
@@ -151,5 +152,20 @@ router.get("/check-username/:username", async function (req, res, next) {
     usernameAvailable: usernameAvailable,
   });
 });
+
+// Route that checks if a user is both logged in and verified.
+router.get(
+  "/check-user-verified",
+  isUser,
+  isVerified,
+  async function (req, res, next) {
+    return res.status(200).json({
+      success: true,
+      message: "User is verified",
+      userVerified: true,
+      userLoggedIn: true,
+    });
+  }
+);
 
 module.exports = router;
