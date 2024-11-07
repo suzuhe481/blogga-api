@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const asyncHandler = require("express-async-handler");
 const generatePassword = require("../lib/passwordUtil").generatePassword;
 
@@ -359,3 +361,92 @@ exports.DELETE_ONE_USER = [
     });
   }),
 ];
+
+// GET - Gets all of the posts from the given user.
+// Uses pagination
+exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
+  const userID = req.params.id;
+
+  // ID is not given or is not valid.
+  if (!userID || !mongoose.isValidObjectId(userID)) {
+    return res.status(400).json({
+      error: true,
+      message: "ID is invalid.",
+    });
+  }
+
+  // Getting the user
+  const user = await User.findById(userID).exec();
+
+  // User does not exist
+  if (!user) {
+    return res.status(404).json({
+      error: true,
+      message: "User does not exist",
+    });
+  }
+
+  // Getting user preferences object
+  const userPreferences = await UserPreferences.findById(
+    user.user_preferences
+  ).exec();
+
+  // Pagination variables
+  const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+  const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+  const blogsSkipped = (currentPage - 1) * blogsPerPage;
+
+  const totalBlogCount = user.posts.length;
+
+  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
+
+  // If user is currently on a higher page number than what is currently available,
+  // changes the currentPage to the last page.
+  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
+
+  // Note: _id: 1 is added to sort because MongoDB will sometimes need
+  // a field with a unique value if documents are the same.
+  // It would be possible for dates to be equal.
+  // The additional _id field helps to sort properly.
+  // Query: This query gets a collection of posts from a SPECIFIC author, as well as the
+  // post author's display_real_name setting.
+  const userPosts = await Post.find({
+    _id: { $in: user.posts },
+  })
+    .populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    })
+    .sort({ published: -1, _id: 1 })
+    .skip(blogsSkipped)
+    .limit(blogsPerPage)
+    .exec();
+
+  // Edits the author field to display the real name or last name depending on preferences.
+  const userPostsWithAuthorName = userPosts.map((post) => {
+    const displayName = userPreferences.display_real_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
+
+    // toObject() converts post into a plain-old javascript object.
+    return {
+      ...post.toObject(),
+      author: displayName,
+    };
+  });
+
+  // Separate displayName variable to send in response.
+  const displayName = userPreferences.display_real_name
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
+
+  return res.status(200).json({
+    userPosts: userPostsWithAuthorName,
+    totalBlogCount,
+    newCurrentPage,
+    author: displayName,
+  });
+});
