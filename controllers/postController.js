@@ -27,16 +27,45 @@ exports.GET_ALL_POSTS = asyncHandler(async (req, res, next) => {
   // a field with a unique value if documents are the same.
   // It would be possible for dates to be equal.
   // The additional _id field helps to sort properly.
+  // Query: This query gets a collection of posts, as well as the
+  // post author's display_real_name setting.
   const multiplePosts = await Post.find({})
-    .populate("author", "first_name last_name")
+    .populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    })
     .sort({ published: -1, _id: 1 })
     .skip(blogsSkipped)
     .limit(blogsPerPage)
     .exec();
 
-  return res
-    .status(200)
-    .json({ multiplePosts, totalBlogCount, newCurrentPage });
+  // Edits the post's author field to display the real name or last name depending on author's preferences.
+  const userPostsWithAuthorName = multiplePosts.map((post) => {
+    // Sets displayed name.
+    // If preferences don't exist, default to username.
+    const displayName =
+      post.author.user_preferences === null
+        ? post.author.username
+        : post.author.user_preferences.display_real_name
+        ? `${post.author.first_name} ${post.author.last_name}`
+        : post.author.username;
+
+    // toObject() converts post into a plain-old javascript object.
+    return {
+      ...post.toObject(),
+      author: displayName,
+      authorID: post.author._id,
+    };
+  });
+
+  return res.status(200).json({
+    multiplePosts: userPostsWithAuthorName,
+    totalBlogCount,
+    newCurrentPage,
+  });
 });
 
 // // GET - get a single post
