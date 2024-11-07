@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const asyncHandler = require("express-async-handler");
 const generatePassword = require("../lib/passwordUtil").generatePassword;
 
@@ -51,8 +53,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
   //   status: "Member",
   // });
 
-  const userPreferences = new UserPreferences();
-
   // Creates a user object.
   const user = new User({
     first_name: req.body.first_name,
@@ -62,7 +62,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
     account_created_date: account_created_date,
     status: "Member",
     verified: false,
-    user_preferences: userPreferences,
   });
 
   // console.log(`User is: ${user}`);
@@ -87,7 +86,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
   if (ErrorMessages.length > 0) {
     // console.log("errors exist");
     // console.log(ErrorMessages);
-
     return res.status(401).json({
       error: true,
       message: ErrorMessages,
@@ -100,12 +98,29 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
       // Assigns hashed password to user object.
       user.password = hashedPassword;
 
+      // Create the user preferences
+      const userPreferences = new UserPreferences();
+
+      // Save user's id to userPreferences
+      userPreferences.user = user._id;
+
+      // Save the userPreferences
+      await userPreferences.save();
+
+      // Update user with user_preferences id
+      user.user_preferences = userPreferences._id;
+
       // Save new user and redirect to home page.
       await user.save();
 
       // await transporter.sendMail(mailData);
     } catch (err) {
       console.log(err);
+
+      // Deletes userPreferences after it was created
+      if (userPreferences && userPreferences._id) {
+        await UserPreferences.deleteOne({ _id: userPreferences._id });
+      }
     }
   }
 
@@ -346,3 +361,92 @@ exports.DELETE_ONE_USER = [
     });
   }),
 ];
+
+// GET - Gets all of the posts from the given user.
+// Uses pagination
+exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
+  const userID = req.params.id;
+
+  // ID is not given or is not valid.
+  if (!userID || !mongoose.isValidObjectId(userID)) {
+    return res.status(400).json({
+      error: true,
+      message: "ID is invalid.",
+    });
+  }
+
+  // Getting the user
+  const user = await User.findById(userID).exec();
+
+  // User does not exist
+  if (!user) {
+    return res.status(404).json({
+      error: true,
+      message: "User does not exist",
+    });
+  }
+
+  // Getting user preferences object
+  const userPreferences = await UserPreferences.findById(
+    user.user_preferences
+  ).exec();
+
+  // Pagination variables
+  const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+  const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+  const blogsSkipped = (currentPage - 1) * blogsPerPage;
+
+  const totalBlogCount = user.posts.length;
+
+  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
+
+  // If user is currently on a higher page number than what is currently available,
+  // changes the currentPage to the last page.
+  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
+
+  // Note: _id: 1 is added to sort because MongoDB will sometimes need
+  // a field with a unique value if documents are the same.
+  // It would be possible for dates to be equal.
+  // The additional _id field helps to sort properly.
+  // Query: This query gets a collection of posts from a SPECIFIC author, as well as the
+  // post author's display_real_name setting.
+  const userPosts = await Post.find({
+    _id: { $in: user.posts },
+  })
+    .populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    })
+    .sort({ published: -1, _id: 1 })
+    .skip(blogsSkipped)
+    .limit(blogsPerPage)
+    .exec();
+
+  // Edits the author field to display the real name or last name depending on preferences.
+  const userPostsWithAuthorName = userPosts.map((post) => {
+    const displayName = userPreferences.display_real_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
+
+    // toObject() converts post into a plain-old javascript object.
+    return {
+      ...post.toObject(),
+      author: displayName,
+    };
+  });
+
+  // Separate displayName variable to send in response.
+  const displayName = userPreferences.display_real_name
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
+
+  return res.status(200).json({
+    userPosts: userPostsWithAuthorName,
+    totalBlogCount,
+    newCurrentPage,
+    author: displayName,
+  });
+});
