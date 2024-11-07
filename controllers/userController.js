@@ -51,8 +51,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
   //   status: "Member",
   // });
 
-  const userPreferences = new UserPreferences();
-
   // Creates a user object.
   const user = new User({
     first_name: req.body.first_name,
@@ -62,7 +60,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
     account_created_date: account_created_date,
     status: "Member",
     verified: false,
-    user_preferences: userPreferences,
   });
 
   // console.log(`User is: ${user}`);
@@ -87,7 +84,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
   if (ErrorMessages.length > 0) {
     // console.log("errors exist");
     // console.log(ErrorMessages);
-
     return res.status(401).json({
       error: true,
       message: ErrorMessages,
@@ -100,12 +96,29 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
       // Assigns hashed password to user object.
       user.password = hashedPassword;
 
+      // Create the user preferences
+      const userPreferences = new UserPreferences();
+
+      // Save user's id to userPreferences
+      userPreferences.user = user._id;
+
+      // Save the userPreferences
+      await userPreferences.save();
+
+      // Update user with user_preferences id
+      user.user_preferences = userPreferences._id;
+
       // Save new user and redirect to home page.
       await user.save();
 
       // await transporter.sendMail(mailData);
     } catch (err) {
       console.log(err);
+
+      // Deletes userPreferences after it was created
+      if (userPreferences && userPreferences._id) {
+        await UserPreferences.deleteOne({ _id: userPreferences._id });
+      }
     }
   }
 
