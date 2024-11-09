@@ -103,6 +103,7 @@ router.get("/send-verification", isUser, async function (req, res, next) {
   }
 
   return res.status(200).json({
+    success: true,
     message: "Verification email has been sent.",
   });
 });
