@@ -68,12 +68,39 @@ exports.GET_ALL_POSTS = asyncHandler(async (req, res, next) => {
   });
 });
 
-// // GET - get a single post
+// GET - get a single post
 exports.GET_ONE_POST = asyncHandler(async (req, res, next) => {
-  const post = await Post.findOne({ shortId: req.params.id });
-  // console.log(post);
+  try {
+    // Gets a single post and populate's the author's display_real_name preference
+    const post = await Post.findOne({ shortId: req.params.id }).populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    });
 
-  return res.status(200).json({ post });
+    // Gets the appropriate display name based on user's preference.
+    const displayName =
+      post.author.user_preferences === null
+        ? post.author.username
+        : post.author.user_preferences.display_real_name
+        ? `${post.author.first_name} ${post.author.last_name}`
+        : post.author.username;
+
+    const postWithAuthorName = {
+      ...post.toObject(),
+      author: displayName,
+      authorID: post.author._id,
+    };
+
+    return res.status(200).json({ post: postWithAuthorName });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "Could not retrieve blog.",
+    });
+  }
 });
 
 // // POST - create a single post
