@@ -420,7 +420,7 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
         select: "display_real_name",
       },
     })
-    .sort({ published: -1, _id: 1 })
+    .sort({ date: -1, _id: 1 })
     .skip(blogsSkipped)
     .limit(blogsPerPage)
     .exec();
