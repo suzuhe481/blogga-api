@@ -5,6 +5,7 @@ const passport = require("passport");
 const isUser = require("../lib/authenticateUtil").isUser;
 const isAdmin = require("../lib/authenticateUtil").isAdmin;
 const hasJWT = require("../lib/authenticateUtil").hasJWT;
+const isVerified = require("../lib/authenticateUtil").isVerified;
 
 const sendVerificationEmail =
   require("../lib/sendVerificationEmailUtil").sendVerificationEmail;
@@ -44,7 +45,7 @@ router.post(
   function (err, req, res, next) {
     return res.status(401).json({
       error: true,
-      message: "Invalid email or password.",
+      message: ["Invalid email or password."],
     });
   }
 );
@@ -102,6 +103,7 @@ router.get("/send-verification", isUser, async function (req, res, next) {
   }
 
   return res.status(200).json({
+    success: true,
     message: "Verification email has been sent.",
   });
 });
@@ -119,5 +121,52 @@ router.get("/verify", isUser, hasJWT, async function (req, res, next) {
     message: "User is verified",
   });
 });
+
+// Route that checks if a given email is already taken by another user.
+router.get("/check-email/:email", async function (req, res, next) {
+  // RegExp to search case insensitive
+  const emailRegex = new RegExp(`^${req.params.email}$`, "i");
+
+  // Checks if email has already been used.
+  const user = await User.findOne({ email: { $regex: emailRegex } }).exec();
+
+  const emailAvailable = user ? false : true;
+
+  return res.status(200).json({
+    emailAvailable: emailAvailable,
+  });
+});
+
+// Route that checks if a given username is already taken by another user.
+router.get("/check-username/:username", async function (req, res, next) {
+  // RegExp to search case insensitive
+  const usernameRegex = new RegExp(`^${req.params.username}$`, "i");
+
+  // Checks if username has already been used.
+  const user = await User.findOne({
+    username: { $regex: usernameRegex },
+  }).exec();
+
+  const usernameAvailable = user ? false : true;
+
+  return res.status(200).json({
+    usernameAvailable: usernameAvailable,
+  });
+});
+
+// Route that checks if a user is both logged in and verified.
+router.get(
+  "/check-user-verified",
+  isUser,
+  isVerified,
+  async function (req, res, next) {
+    return res.status(200).json({
+      success: true,
+      message: "User is verified",
+      userVerified: true,
+      userLoggedIn: true,
+    });
+  }
+);
 
 module.exports = router;

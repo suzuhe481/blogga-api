@@ -10,7 +10,7 @@ const customFields = {
 
 // Verify the user.
 const verifyUser = async (email, password, done) => {
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
 
   // User with that email does not exist.
   if (!user) {

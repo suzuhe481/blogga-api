@@ -5,17 +5,20 @@ const path = require("path");
 const logger = require("morgan");
 const passport = require("passport");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const MongoStore = require("connect-mongo");
 
 require("dotenv").config();
 
 var app = express();
 
+app.use(cookieParser());
+
 // Setting origin URLS for development testing
 var ORIGIN_URLS = [];
 
 // Sets origin urls for dev mode or production.
-if (process.env.DEV_MODE === "false") {
+if (process.env.NODE_ENV === "prod") {
   ORIGIN_URLS.push(process.env.PROD_ORIGIN_URL);
 } else {
   if (process.env.DEV_ORIGIN_URL_1 !== "undefined") {
@@ -35,14 +38,39 @@ if (process.env.DEV_MODE === "false") {
   }
 }
 
-// Use DEV_MODE env variable to test locally
-// app.use(cors()); // Works
+// Cors settings.
 app.use(
   cors({
-    origin: ORIGIN_URLS,
+    // Dynamically sets origin
+    origin: function (origin, callback) {
+      console.log("origin start");
+
+      // Allow requests without an origin
+      if (!origin) {
+        console.log("Allowing request with no origin");
+        return callback(null, true);
+      }
+
+      // Check if the origin is allowed
+      if (ORIGIN_URLS.indexOf(origin) === -1) {
+        console.log("Not allowed at specified origin by CORS");
+        return callback(new Error("Not allowed by CORS"), false);
+      }
+
+      console.log("origin end");
+
+      callback(null, true); // Allow the origin
+    },
     credentials: true,
   })
 );
+
+// Debug console logs
+console.log(`CORS ORIGIN_URLS:  ${ORIGIN_URLS}`);
+
+// Logging environment variables
+console.log(`DEV MODE: ${process.env.DEV_MODE}`);
+console.log(`NODE ENV: ${process.env.NODE_ENV}`);
 
 // Creates connection to MongoDB
 require("./config/database");
@@ -61,24 +89,100 @@ const sessionStore = MongoStore.create({
   autoRemoveInterval: 10, // Minutes
 });
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: sessionStore,
-    unset: "destroy", // Removes session from database
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
-      // maxAge: 1000 * 60 * 60, // 1 hour
-      // maxAge: 1000 * 60, // 60 seconds
-      // maxAge: 1000 * 30, // 30 seconds
-      secure: false,
-      sameSite: false,
-      httpOnly: true,
-    },
-  })
-);
+// Production session.
+// Backend is hosted.
+// To be used with a hosted frontend.
+if (process.env.NODE_ENV === "prod") {
+  // console.log("session in: production environment");
+  app.set("trust proxy", 1);
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        path: "/",
+        domain: ".myblogga.com",
+      },
+    })
+  );
+}
+// Hosted Development session.
+// Backend is hosted.
+// To be used with a local frontend.
+// NOTE: Some browsers won't save cookies for logging in. Chrome specifically.
+// If some features don't work, enable third party cookies in the browser.
+else if (process.env.NODE_ENV === "hosted_dev") {
+  // console.log("session in: hosted development environment");
+
+  app.set("trust proxy", 1);
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: true,
+        sameSite: "none",
+        httpOnly: true,
+        path: "/",
+      },
+    })
+  );
+}
+// Local Development session.
+// Backend is running locally.
+// To be used with a local frontend.
+else {
+  // console.log("session in: local development environment");
+
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      store: sessionStore,
+      unset: "destroy", // Removes session from database
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24, // Equals 1 day (1 day * 24 hr/1 day * 60 min/1 hr * 60 sec/1 min * 1000 ms / 1 sec)
+        // maxAge: 1000 * 60 * 60, // 1 hour
+        // maxAge: 1000 * 60, // 60 seconds
+        // maxAge: 1000 * 30, // 30 seconds
+        secure: false,
+        sameSite: "lax",
+        httpOnly: true,
+        path: "/",
+      },
+    })
+  );
+}
+
+// Debugging.
+// Logging the request Headers and Cookies.
+// Logging the response Headers
+// app.use((req, res, next) => {
+//   console.log("Request Headers:", req.headers);
+//   console.log("Request Cookies:", req.cookies);
+//   console.log("Response Headers:", res.getHeaders());
+//   next();
+// });
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));

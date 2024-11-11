@@ -27,24 +27,80 @@ exports.GET_ALL_POSTS = asyncHandler(async (req, res, next) => {
   // a field with a unique value if documents are the same.
   // It would be possible for dates to be equal.
   // The additional _id field helps to sort properly.
+  // Query: This query gets a collection of posts, as well as the
+  // post author's display_real_name setting.
   const multiplePosts = await Post.find({})
-    .populate("author", "first_name last_name")
-    .sort({ published: -1, _id: 1 })
+    .populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    })
+    .sort({ date: -1, _id: 1 })
     .skip(blogsSkipped)
     .limit(blogsPerPage)
     .exec();
 
-  return res
-    .status(200)
-    .json({ multiplePosts, totalBlogCount, newCurrentPage });
+  // Edits the post's author field to display the real name or last name depending on author's preferences.
+  const userPostsWithAuthorName = multiplePosts.map((post) => {
+    // Sets displayed name.
+    // If preferences don't exist, default to username.
+    const displayName =
+      post.author.user_preferences === null
+        ? post.author.username
+        : post.author.user_preferences.display_real_name
+        ? `${post.author.first_name} ${post.author.last_name}`
+        : post.author.username;
+
+    // toObject() converts post into a plain-old javascript object.
+    return {
+      ...post.toObject(),
+      author: displayName,
+      authorID: post.author._id,
+    };
+  });
+
+  return res.status(200).json({
+    multiplePosts: userPostsWithAuthorName,
+    totalBlogCount,
+    newCurrentPage,
+  });
 });
 
-// // GET - get a single post
+// GET - get a single post
 exports.GET_ONE_POST = asyncHandler(async (req, res, next) => {
-  const post = await Post.findOne({ shortId: req.params.id });
-  // console.log(post);
+  try {
+    // Gets a single post and populate's the author's display_real_name preference
+    const post = await Post.findOne({ shortId: req.params.id }).populate({
+      path: "author",
+      populate: {
+        path: "user_preferences",
+        select: "display_real_name",
+      },
+    });
 
-  return res.status(200).json({ post });
+    // Gets the appropriate display name based on user's preference.
+    const displayName =
+      post.author.user_preferences === null
+        ? post.author.username
+        : post.author.user_preferences.display_real_name
+        ? `${post.author.first_name} ${post.author.last_name}`
+        : post.author.username;
+
+    const postWithAuthorName = {
+      ...post.toObject(),
+      author: displayName,
+      authorID: post.author._id,
+    };
+
+    return res.status(200).json({ post: postWithAuthorName });
+  } catch (err) {
+    return res.status(500).json({
+      error: true,
+      message: "Could not retrieve blog.",
+    });
+  }
 });
 
 // // POST - create a single post
