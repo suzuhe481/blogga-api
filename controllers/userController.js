@@ -141,10 +141,17 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
 exports.GET_SELF_NAME = [
   isUser,
   asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req.user._id).populate("user_preferences");
+
+    // Stores the appropriate author name using the user_preferences.
+    const author = user.user_preferences.display_real_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username;
+
     return res.status(200).json({
-      first_name: req.user.first_name,
-      last_name: req.user.last_name,
       verified: req.user.verified,
+      id: req.user._id,
+      author,
     });
   }),
 ];
@@ -350,6 +357,7 @@ exports.DELETE_ONE_USER = [
 
     // Delete order - Posts, Preferences, User.
     await Post.deleteMany({ user: userID }).exec();
+    await UserPreferences.deleteOne({ user: userID }).exec();
     await User.findByIdAndDelete(userID).exec();
 
     // Removes user session from database.
