@@ -6,8 +6,11 @@ const generatePassword = require("../lib/passwordUtil").generatePassword;
 const User = require("../models/User");
 const Post = require("../models/Post");
 const UserPreferences = require("../models/UserPreferences");
-const { transporter, mailData } = require("../config/nodemailer");
-const { validatePassword } = require("../lib/passwordUtil");
+// const { transporter, mailData } = require("../config/nodemailer");
+// const { validatePassword } = require("../lib/passwordUtil");
+
+const sendVerificationEmail =
+  require("../lib/sendVerificationEmailUtil").sendVerificationEmail;
 
 const isUser = require("../lib/authenticateUtil").isUser;
 
@@ -113,7 +116,9 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
       // Save new user and redirect to home page.
       await user.save();
 
-      await transporter.sendMail(mailData);
+      // await transporter.sendMail(mailData);
+      const result = await sendVerificationEmail(user);
+      
     } catch (err) {
       console.log(err);
 
