@@ -113,7 +113,7 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
       // Save new user and redirect to home page.
       await user.save();
 
-      // await transporter.sendMail(mailData);
+      await transporter.sendMail(mailData);
     } catch (err) {
       console.log(err);
 
