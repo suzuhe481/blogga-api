@@ -118,7 +118,6 @@ exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
 
       // await transporter.sendMail(mailData);
       const result = await sendVerificationEmail(user);
-      
     } catch (err) {
       console.log(err);
 
@@ -265,32 +264,41 @@ exports.PUT_SETTINGS = [
 exports.PUT_EMAIL = [
   isUser,
   asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.user._id).exec();
+    try {
+      const user = await User.findById(req.user._id).exec();
 
-    const newEmail = req.body.email;
-    const confirmPassword = req.body.emailPassword;
+      const newEmail = req.body.email;
+      const confirmPassword = req.body.emailPassword;
 
-    const validPassword = await validatePassword(
-      confirmPassword,
-      req.user.password
-    );
+      const validPassword = await validatePassword(
+        confirmPassword,
+        req.user.password
+      );
 
-    if (!validPassword) {
-      return res.status(401).json({
+      if (!validPassword) {
+        return res.status(401).json({
+          error: true,
+          message: "Couldn't change email: Invalid password.",
+        });
+      } else {
+        const updateEmail = { $set: { email: newEmail } };
+
+        const result = await User.findByIdAndUpdate(req.user._id, updateEmail, {
+          new: true,
+          runValidators: true,
+        });
+
+        return res.status(200).json({
+          sucess: true,
+          message: "Email successfully changed.",
+        });
+      }
+    } catch (error) {
+      console.log(error);
+
+      return res.status(500).json({
         error: true,
-        message: "Couldn't change email: Invalid password.",
-      });
-    } else {
-      const updateEmail = { $set: { email: newEmail } };
-
-      const result = await User.findByIdAndUpdate(req.user._id, updateEmail, {
-        new: true,
-        runValidators: true,
-      });
-
-      return res.status(200).json({
-        sucess: true,
-        message: "Email successfully changed.",
+        message: "Something went wrong while updating the email.",
       });
     }
   }),
