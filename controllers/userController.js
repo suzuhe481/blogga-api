@@ -4,7 +4,7 @@ const asyncHandler = require("express-async-handler");
 const generatePassword = require("../lib/passwordUtil").generatePassword;
 
 const User = require("../models/User");
-const Post = require("../models/Post");
+const Blog = require("../models/Blog");
 const UserPreferences = require("../models/UserPreferences");
 const { validatePassword } = require("../lib/passwordUtil");
 
@@ -353,7 +353,7 @@ exports.PUT_PASSWORD = [
   }),
 ];
 
-// DELETE - Deletes the profile of currently logged in user and their posts.
+// DELETE - Deletes the profile of currently logged in user and their blogs.
 // The logged in user is identified by the current user session based on req.user.
 // isUser - Checks that the user is logged in.
 exports.DELETE_ONE_USER = [
@@ -367,8 +367,8 @@ exports.DELETE_ONE_USER = [
     // Get the user ID from the user session.
     const userID = req.user._id;
 
-    // Delete order - Posts, Preferences, User.
-    await Post.deleteMany({ user: userID }).exec();
+    // Delete order - Blogs, Preferences, User.
+    await Blog.deleteMany({ user: userID }).exec();
     await UserPreferences.deleteOne({ user: userID }).exec();
     await User.findByIdAndDelete(userID).exec();
 
@@ -382,9 +382,9 @@ exports.DELETE_ONE_USER = [
   }),
 ];
 
-// GET - Gets all of the posts from the given user.
+// GET - Gets all of the blogs from the given user.
 // Uses pagination
-exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
+exports.GET_USER_BLOGS = asyncHandler(async (req, res, next) => {
   const userID = req.params.id;
 
   // ID is not given or is not valid.
@@ -416,7 +416,7 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
   const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
   const blogsSkipped = (currentPage - 1) * blogsPerPage;
 
-  const totalBlogCount = user.posts.length;
+  const totalBlogCount = user.blogs.length;
 
   const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
 
@@ -428,10 +428,10 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
   // a field with a unique value if documents are the same.
   // It would be possible for dates to be equal.
   // The additional _id field helps to sort properly.
-  // Query: This query gets a collection of posts from a SPECIFIC author, as well as the
-  // post author's display_real_name setting.
-  const userPosts = await Post.find({
-    _id: { $in: user.posts },
+  // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
+  // blog author's display_real_name setting.
+  const userBlogs = await Blog.find({
+    _id: { $in: user.blogs },
   })
     .populate({
       path: "author",
@@ -446,14 +446,14 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
     .exec();
 
   // Edits the author field to display the real name or last name depending on preferences.
-  const userPostsWithAuthorName = userPosts.map((post) => {
+  const userBlogsWithAuthorName = userBlogs.map((blog) => {
     const displayName = userPreferences.display_real_name
       ? `${user.first_name} ${user.last_name}`
       : user.username;
 
-    // toObject() converts post into a plain-old javascript object.
+    // toObject() converts blog into a plain-old javascript object.
     return {
-      ...post.toObject(),
+      ...blog.toObject(),
       author: displayName,
     };
   });
@@ -464,7 +464,7 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
     : user.username;
 
   return res.status(200).json({
-    userPosts: userPostsWithAuthorName,
+    userBlogs: userBlogsWithAuthorName,
     totalBlogCount,
     newCurrentPage,
     author: displayName,
