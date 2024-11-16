@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const PostSchema = new Schema({
+const BlogSchema = new Schema({
   title: {
     type: String,
     required: true,
     minLength: 1,
   },
-  post: {
+  blog: {
     type: String,
     required: true,
     minLength: 1,
@@ -40,4 +40,4 @@ const PostSchema = new Schema({
 });
 
 // Export module
-module.exports = mongoose.model("Post", PostSchema);
+module.exports = mongoose.model("Blog", BlogSchema);

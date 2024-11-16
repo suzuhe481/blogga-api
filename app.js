@@ -199,14 +199,14 @@ app.use(passport.session());
 
 // Getting routes
 const userRouter = require("./routes/user");
-const postRouter = require("./routes/post");
+const blogRouter = require("./routes/blog");
 const commentRouter = require("./routes/comment");
 const indexRouter = require("./routes/index");
 
 // Routes
 app.use("/users", userRouter);
-app.use("/posts", postRouter);
-app.use("/posts/:postId/comments", commentRouter); // Gets comment resources on a specific post
+app.use("/blogs", blogRouter);
+app.use("/blogs/:blogId/comments", commentRouter); // Gets comment resources on a specific blog
 app.use("/", indexRouter);
 
 // For debugging.

@@ -1,13 +1,13 @@
 var express = require("express");
 var router = express.Router();
 
-const post_controller = require("../controllers/postController");
+const blog_controller = require("../controllers/blogController");
 
 // Routes for resources
-router.get("/", post_controller.GET_ALL_POSTS);
-router.get("/:id", post_controller.GET_ONE_POST);
-router.post("/", post_controller.POST_ONE_POST);
-router.put("/:id", post_controller.PUT_ONE_POST);
-router.delete("/:id", post_controller.DELETE_ONE_POST);
+router.get("/", blog_controller.GET_ALL_BLOGS);
+router.get("/:id", blog_controller.GET_ONE_BLOG);
+router.post("/", blog_controller.POST_ONE_BLOG);
+router.put("/:id", blog_controller.PUT_ONE_BLOG);
+router.delete("/:id", blog_controller.DELETE_ONE_BLOG);
 
 module.exports = router;

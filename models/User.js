@@ -43,10 +43,10 @@ const UserSchema = new Schema({
     required: true,
     default: false,
   },
-  posts: [
+  blogs: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Post",
+      ref: "Blog",
     },
   ],
   comments: [
