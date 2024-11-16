@@ -6,7 +6,6 @@ const generatePassword = require("../lib/passwordUtil").generatePassword;
 const User = require("../models/User");
 const Post = require("../models/Post");
 const UserPreferences = require("../models/UserPreferences");
-// const { transporter, mailData } = require("../config/nodemailer");
 const { validatePassword } = require("../lib/passwordUtil");
 
 const sendVerificationEmail =
@@ -289,7 +288,7 @@ exports.PUT_EMAIL = [
         });
 
         return res.status(200).json({
-          sucess: true,
+          success: true,
           message: "Email successfully changed.",
         });
       }
@@ -347,7 +346,7 @@ exports.PUT_PASSWORD = [
       });
 
       return res.status(200).json({
-        sucess: true,
+        success: true,
         message: "Password successfully changed.",
       });
     }
@@ -377,7 +376,7 @@ exports.DELETE_ONE_USER = [
     await req.session.destroy();
 
     return res.status(200).json({
-      sucess: true,
+      success: true,
       message: "Profile deleted.",
     });
   }),
