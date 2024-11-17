@@ -11,7 +11,6 @@ const { nanoid } = require("nanoid");
 // Post Routes
 // GET - get all blogs
 exports.GET_ALL_BLOGS = asyncHandler(async (req, res, next) => {
-  console.log("run");
   const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
   const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
   const blogsSkipped = (currentPage - 1) * blogsPerPage;
@@ -54,7 +53,6 @@ exports.GET_ALL_BLOGS = asyncHandler(async (req, res, next) => {
         ? `${blog.author.first_name} ${blog.author.last_name}`
         : blog.author.username;
 
-    console.log("end");
     // toObject() converts blog into a plain-old javascript object.
     return {
       ...blog.toObject(),
@@ -119,7 +117,6 @@ exports.POST_ONE_BLOG = [
 
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
-    // console.log(errors);
 
     // Returns error from invalid form.
     if (!errors.isEmpty()) {
