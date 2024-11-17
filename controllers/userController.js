@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const asyncHandler = require("express-async-handler");
+const { body, validationResult } = require("express-validator");
 const generatePassword = require("../lib/passwordUtil").generatePassword;
 
 const User = require("../models/User");
@@ -42,96 +43,118 @@ exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
 
 // POST - create a single user.
 // Public to all.
-exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
-  // Get date at time of creating account.
-  const account_created_date = new Date().toISOString();
+exports.POST_ONE_USER = [
+  // Validate form data.
+  body("first_name", "First name cannot be empty.")
+    .trim()
+    .escape()
+    .isLength({ min: 1 }),
+  body("last_name", "Last name cannot be empty.")
+    .trim()
+    .escape()
+    .isLength({ min: 1 }),
+  body("username")
+    .trim()
+    .escape()
+    .isLength({ min: 4 })
+    .custom((value) => !/\s/.test(value))
+    .withMessage("Username cannot have spaces.")
+    .isAlphanumeric()
+    .withMessage("Username can only contain letters or numbers.")
+    // Checks is a username is taken.
+    .custom(async (username) => {
+      const usernameIsTaken = await User.findOne({
+        username: username,
+      }).exec();
 
-  // Creating a test user object, with form's given email
-  // const user = new User({
-  //   first_name: "First",
-  //   last_name: "Last",
-  //   email: req.body.email,
-  //   account_created_date: date,
-  //   status: "Member",
-  // });
+      if (usernameIsTaken) {
+        throw new Error("Validator: Username is already in use.");
+      }
+    }),
+  // Checks if an email address is taken.
+  body("email", "Email is not valid.")
+    .trim()
+    .escape()
+    .isEmail()
+    .custom(async (email) => {
+      const emailIsTaken = await User.findOne({ email: email }).exec();
 
-  // Creates a user object.
-  const user = new User({
-    first_name: req.body.first_name,
-    last_name: req.body.last_name,
-    username: req.body.username,
-    email: req.body.email,
-    account_created_date: account_created_date,
-    status: "Member",
-    verified: false,
-  });
+      if (emailIsTaken) {
+        throw new Error("Validator: Email is already in use.");
+      }
+    }),
 
-  // console.log(`User is: ${user}`);
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors.
+    const errors = validationResult(req);
 
-  const ErrorMessages = [];
+    // Get date at time of creating account.
+    const account_created_date = new Date().toISOString();
 
-  // Checks if email has already been used.
-  const emailIsTaken = await User.findOne({ email: req.body.email }).exec();
-
-  const usernameIsTaken = await User.findOne({
-    username: req.body.username,
-  }).exec();
-
-  if (emailIsTaken) {
-    ErrorMessages.push("Email is already in use.");
-  }
-
-  if (usernameIsTaken) {
-    ErrorMessages.push("Username is already in use.");
-  }
-
-  if (ErrorMessages.length > 0) {
-    // console.log("errors exist");
-    // console.log(ErrorMessages);
-    return res.status(401).json({
-      error: true,
-      message: ErrorMessages,
+    // Creates a user object.
+    const user = new User({
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      username: req.body.username,
+      email: req.body.email,
+      account_created_date: account_created_date,
+      status: "Member",
+      verified: false,
     });
-  } else {
-    try {
-      // Creates a hashed password
-      const hashedPassword = await generatePassword(req.body.password);
 
-      // Assigns hashed password to user object.
-      user.password = hashedPassword;
+    // Sending errors ia validation failed.
+    if (!errors.isEmpty()) {
+      // Renames the "msg" key to "message", since the frontend uses message as the key.
+      errors.errors.map((value) => {
+        value.message = value.msg;
+        delete value.msg;
+        return value;
+      });
 
-      // Create the user preferences
-      const userPreferences = new UserPreferences();
+      return res.status(401).json({
+        error: true,
+        message: errors.array(),
+      });
+    } else {
+      try {
+        // Creates a hashed password
+        const hashedPassword = await generatePassword(req.body.password);
 
-      // Save user's id to userPreferences
-      userPreferences.user = user._id;
+        // Assigns hashed password to user object.
+        user.password = hashedPassword;
 
-      // Save the userPreferences
-      await userPreferences.save();
+        // Create the user preferences
+        const userPreferences = new UserPreferences();
 
-      // Update user with user_preferences id
-      user.user_preferences = userPreferences._id;
+        // Save user's id to userPreferences
+        userPreferences.user = user._id;
 
-      // Save new user and redirect to home page.
-      await user.save();
+        // Save the userPreferences
+        await userPreferences.save();
 
-      // await transporter.sendMail(mailData);
-      const result = await sendVerificationEmail(user);
-    } catch (err) {
-      console.log(err);
+        // Update user with user_preferences id
+        user.user_preferences = userPreferences._id;
 
-      // Deletes userPreferences after it was created
-      if (userPreferences && userPreferences._id) {
-        await UserPreferences.deleteOne({ _id: userPreferences._id });
+        // Save new user and redirect to home page.
+        await user.save();
+
+        const result = await sendVerificationEmail(user);
+      } catch (err) {
+        console.log(err);
+
+        // Deletes userPreferences after it was created
+        if (userPreferences && userPreferences._id) {
+          await UserPreferences.deleteOne({ _id: userPreferences._id });
+        }
       }
     }
-  }
 
-  return res.status(200).json({
-    success: true,
-    user: user,
-  });
-});
+    return res.status(200).json({
+      success: true,
+      user: user,
+    });
+  }),
+];
 
 // PUT - update a single user
 // Only for own user and admin.
