@@ -10,6 +10,7 @@ router.get("/name", user_controller.GET_SELF_NAME);
 router.get("/settings", user_controller.GET_SETTINGS);
 router.get("/:id", user_controller.GET_ONE_USER);
 router.get("/blogs/:id", user_controller.GET_USER_BLOGS);
+router.get("/drafts/:id", user_controller.GET_USER_DRAFTS);
 
 // PUT (UPDATE) ROUTES
 router.put("/settings", user_controller.PUT_SETTINGS);
