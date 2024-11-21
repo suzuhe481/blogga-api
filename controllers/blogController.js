@@ -80,6 +80,24 @@ exports.GET_ONE_BLOG = asyncHandler(async (req, res, next) => {
       },
     });
 
+    // Checks if the logged in user is the same user of the data being requested.
+    // MongoDB ObjectId needs to be converted to string.
+    // If user is not logged in or not owner of the blog, isBlogOwner = false.
+    const isBlogOwner =
+      req.user === undefined
+        ? false
+        : req.user._id.toString() !== blog.author._id.toString()
+        ? false
+        : true;
+
+    // Prevents a user from seeing an unpublished blog if they are not the owner.
+    if (!isBlogOwner && !blog.published) {
+      return res.status(500).json({
+        error: true,
+        message: "Could not retrieve blog.",
+      });
+    }
+
     // Gets the appropriate display name based on user's preference.
     const displayName =
       blog.author.user_preferences === null
@@ -92,6 +110,7 @@ exports.GET_ONE_BLOG = asyncHandler(async (req, res, next) => {
       ...blog.toObject(),
       author: displayName,
       authorID: blog.author._id,
+      isBlogOwner,
     };
 
     return res.status(200).json({ blog: blogWithAuthorName });
