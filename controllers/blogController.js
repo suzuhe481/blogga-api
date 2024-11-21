@@ -203,10 +203,120 @@ exports.POST_ONE_BLOG = [
   }),
 ];
 
-// // PUT - update a single blog
-exports.PUT_ONE_BLOG = asyncHandler(async (req, res, next) => {
-  return res.send(`PUT - update a single blog - ID: ${req.params.id}`);
-});
+// PUT - update a single blog
+exports.PUT_ONE_BLOG = [
+  isUser,
+  body("title", "Title is empty or too short")
+    .trim()
+    .escape()
+    .isLength({ min: 3 }),
+  body("blog", "Blog is empty or too short")
+    .trim()
+    .escape()
+    .isLength({ min: 50 }),
+
+  asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+
+    // Returns error from invalid form.
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: true,
+        msg: errors.array(),
+      });
+    }
+
+    const blog = await Blog.findOne({ shortId: req.body.shortId });
+    const newBlog = req.body;
+
+    // Blog not found
+    if (!blog) {
+      return;
+    }
+
+    try {
+      const isPublished = blog.published;
+      const saveAsDraft = newBlog.draft;
+      const isContentChanged =
+        newBlog.blog !== blog.blog
+          ? true
+          : newBlog.title !== blog.title
+          ? true
+          : false;
+      const timeNow = new Date();
+
+      // Draft => Draft
+      if (!isPublished && saveAsDraft) {
+        blog.published = false;
+        blog.title = newBlog.title;
+        blog.blog = newBlog.blog;
+
+        // If previously published, change last_edited
+        if (isContentChanged && blog.date !== null) {
+          blog.last_edited = timeNow;
+        }
+
+        blog.save();
+      }
+      // Draft => Published
+      else if (!isPublished && !saveAsDraft) {
+        blog.published = true;
+        blog.title = newBlog.title;
+        blog.blog = newBlog.blog;
+
+        // First time published
+        if (blog.date === null) {
+          blog.date = timeNow;
+        }
+        // If previously published, change last_edited
+        else if (isContentChanged && blog.date !== null) {
+          blog.last_edited = timeNow;
+        }
+
+        blog.save();
+      }
+      // Published => Published
+      else if (isPublished && !saveAsDraft) {
+        blog.published = true;
+
+        // If content is changed, set last_edited to now
+        if (isContentChanged) {
+          blog.last_edited = timeNow;
+          blog.title = newBlog.title;
+          blog.blog = newBlog.blog;
+        }
+
+        blog.save();
+      }
+      // Published => Draft
+      // Set published to false.
+      else if (isPublished && saveAsDraft) {
+        blog.published = false;
+
+        // If content is changed, set last_edited to now
+        if (isContentChanged) {
+          blog.last_edited = timeNow;
+          blog.title = newBlog.title;
+          blog.blog = newBlog.blog;
+        }
+
+        blog.save();
+      }
+
+      return res.status(200).json({
+        success: true,
+        blog: blog,
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(500).json({
+        error: true,
+        msg: ["Could not save blog to server."],
+      });
+    }
+  }),
+];
 
 // // DELETE - delete a single blog
 exports.DELETE_ONE_BLOG = asyncHandler(async (req, res, next) => {
