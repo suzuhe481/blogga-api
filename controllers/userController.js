@@ -418,78 +418,244 @@ exports.GET_USER_BLOGS = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Getting the user
-  const user = await User.findById(userID).exec();
+  try {
+    // Getting the user
+    const user = await User.findById(userID).exec();
 
-  // User does not exist
-  if (!user) {
-    return res.status(404).json({
-      error: true,
-      message: "User does not exist",
+    // User does not exist
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User does not exist",
+      });
+    }
+
+    // Checks if the logged in user is the same user of the data being requested.
+    // MongoDB ObjectId needs to be converted to string.
+    const isLoggedInUser =
+      req.user._id.toString() !== req.params.id ? false : true;
+
+    // Getting user preferences object
+    const userPreferences = await UserPreferences.findById(
+      user.user_preferences
+    ).exec();
+
+    // Count of published blogs.
+    const blogsPublished = await Blog.countDocuments({
+      _id: { $in: user.blogs },
+      published: true,
     });
-  }
 
-  // Getting user preferences object
-  const userPreferences = await UserPreferences.findById(
-    user.user_preferences
-  ).exec();
+    // Pagination variables
+    const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+    const blogsSkipped = (currentPage - 1) * blogsPerPage;
 
-  // Pagination variables
-  const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
-  const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
-  const blogsSkipped = (currentPage - 1) * blogsPerPage;
+    // const totalBlogCount = user.blogs.length;
+    // const blogsPublished = userBlogs.length;
 
-  const totalBlogCount = user.blogs.length;
+    const totalPages = Math.ceil(blogsPublished / blogsPerPage);
 
-  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
+    // If user is currently on a higher page number than what is currently available,
+    // changes the currentPage to the last page.
+    // If the page becomes less than 1, sets to 1.
+    // Otherwise, gets set to the currentPage.
+    const newCurrentPage =
+      currentPage <= 1
+        ? 1
+        : currentPage > totalPages
+        ? totalPages
+        : currentPage;
 
-  // If user is currently on a higher page number than what is currently available,
-  // changes the currentPage to the last page.
-  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
-
-  // Note: _id: 1 is added to sort because MongoDB will sometimes need
-  // a field with a unique value if documents are the same.
-  // It would be possible for dates to be equal.
-  // The additional _id field helps to sort properly.
-  // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
-  // blog author's display_real_name setting.
-  const userBlogs = await Blog.find({
-    _id: { $in: user.blogs },
-  })
-    .populate({
-      path: "author",
-      populate: {
-        path: "user_preferences",
-        select: "display_real_name",
-      },
+    // Note: _id: 1 is added to sort because MongoDB will sometimes need
+    // a field with a unique value if documents are the same.
+    // It would be possible for dates to be equal.
+    // The additional _id field helps to sort properly.
+    // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
+    // blog author's display_real_name setting.
+    const userBlogs = await Blog.find({
+      _id: { $in: user.blogs },
+      published: true,
     })
-    .sort({ date: -1, _id: 1 })
-    .skip(blogsSkipped)
-    .limit(blogsPerPage)
-    .exec();
+      .populate({
+        path: "author",
+        populate: {
+          path: "user_preferences",
+          select: "display_real_name",
+        },
+      })
+      .sort({ date: -1, _id: 1 })
+      .skip(blogsSkipped)
+      .limit(blogsPerPage)
+      .exec();
 
-  // Edits the author field to display the real name or last name depending on preferences.
-  const userBlogsWithAuthorName = userBlogs.map((blog) => {
+    // Edits the author field to display the real name or last name depending on preferences.
+    const userBlogsWithAuthorName = userBlogs.map((blog) => {
+      const displayName = userPreferences.display_real_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.username;
+
+      // toObject() converts blog into a plain-old javascript object.
+      return {
+        ...blog.toObject(),
+        author: displayName,
+      };
+    });
+
+    // Separate displayName variable to send in response.
     const displayName = userPreferences.display_real_name
       ? `${user.first_name} ${user.last_name}`
       : user.username;
+    console.log("after");
 
-    // toObject() converts blog into a plain-old javascript object.
-    return {
-      ...blog.toObject(),
-      author: displayName,
+    const authorData = {
+      name: displayName,
+      memberSince: user.account_created_date,
+      isLoggedInUser: isLoggedInUser,
+      blogsPublished,
     };
-  });
 
-  // Separate displayName variable to send in response.
-  const displayName = userPreferences.display_real_name
-    ? `${user.first_name} ${user.last_name}`
-    : user.username;
-
-  return res.status(200).json({
-    userBlogs: userBlogsWithAuthorName,
-    totalBlogCount,
-    newCurrentPage,
-    author: displayName,
-  });
+    return res.status(200).json({
+      userBlogs: userBlogsWithAuthorName,
+      newCurrentPage,
+      authorData,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
+
+exports.GET_USER_DRAFTS = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    try {
+      // Checks if user in session is the same as the user being requested
+      if (req.user._id.toString() !== req.params.id) {
+        // Return a not authorized error
+        return res.status(401).json({
+          error: true,
+          message: "You are not authorized.",
+        });
+      }
+
+      const userID = req.params.id;
+
+      // ID is not given or is not valid.
+      if (!userID || !mongoose.isValidObjectId(userID)) {
+        return res.status(400).json({
+          error: true,
+          message: "ID is invalid.",
+        });
+      }
+
+      // Getting the user
+      const user = await User.findById(userID).exec();
+
+      // User does not exist
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User does not exist",
+        });
+      }
+
+      // Checks if the logged in user is the same user of the data being requested.
+      // MongoDB ObjectId needs to be converted to string.
+      const isLoggedInUser =
+        req.user._id.toString() !== req.params.id ? false : true;
+
+      // Getting user preferences object
+      const userPreferences = await UserPreferences.findById(
+        user.user_preferences
+      ).exec();
+
+      // Count of published blogs.
+      const blogsPublished = await Blog.countDocuments({
+        _id: { $in: user.blogs },
+        published: true,
+      });
+
+      // Count of drafts.
+      const blogDrafts = await Blog.countDocuments({
+        _id: { $in: user.blogs },
+        published: false,
+      });
+
+      // Pagination variables
+      const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+      const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+      const blogsSkipped = (currentPage - 1) * blogsPerPage;
+
+      // const totalBlogCount = user.blogs.length;
+
+      const totalPages = Math.ceil(blogDrafts / blogsPerPage);
+
+      // If user is currently on a higher page number than what is currently available,
+      // changes the currentPage to the last page.
+      // If the page becomes less than 1, sets to 1.
+      // Otherwise, gets set to the currentPage.
+      const newCurrentPage =
+        currentPage <= 1
+          ? 1
+          : currentPage > totalPages
+          ? totalPages
+          : currentPage;
+
+      // Note: _id: 1 is added to sort because MongoDB will sometimes need
+      // a field with a unique value if documents are the same.
+      // It would be possible for dates to be equal.
+      // The additional _id field helps to sort properly.
+      // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
+      // blog author's display_real_name setting.
+      const userBlogs = await Blog.find({
+        _id: { $in: user.blogs },
+        published: false,
+      })
+        .populate({
+          path: "author",
+          populate: {
+            path: "user_preferences",
+            select: "display_real_name",
+          },
+        })
+        .sort({ date: -1, _id: 1 })
+        .skip(blogsSkipped)
+        .limit(blogsPerPage)
+        .exec();
+
+      // Edits the author field to display the real name or last name depending on preferences.
+      const userBlogsWithAuthorName = userBlogs.map((blog) => {
+        const displayName = userPreferences.display_real_name
+          ? `${user.first_name} ${user.last_name}`
+          : user.username;
+
+        // toObject() converts blog into a plain-old javascript object.
+        return {
+          ...blog.toObject(),
+          author: displayName,
+        };
+      });
+
+      // Separate displayName variable to send in response.
+      const displayName = userPreferences.display_real_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.username;
+
+      const authorData = {
+        name: displayName,
+        memberSince: user.account_created_date,
+        isLoggedInUser: isLoggedInUser,
+        blogsPublished: blogsPublished,
+        blogDrafts: blogDrafts,
+      };
+
+      return res.status(200).json({
+        userBlogs: userBlogsWithAuthorName,
+        newCurrentPage,
+        authorData: authorData,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }),
+];
