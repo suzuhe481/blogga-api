@@ -319,6 +319,58 @@ exports.PUT_ONE_BLOG = [
 ];
 
 // // DELETE - delete a single blog
-exports.DELETE_ONE_BLOG = asyncHandler(async (req, res, next) => {
-  return res.send(`DELETE - delete a single blog - ID: ${req.params.id}`);
-});
+exports.DELETE_ONE_BLOG = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    // Gets a single post and populate's the author
+    const blog = await Blog.findOne({ shortId: req.params.id }).populate({
+      path: "author",
+    });
+
+    const blogID = blog._id;
+
+    // Checks if the logged in user is the same user of the data being requested.
+    // MongoDB ObjectId needs to be converted to string.
+    // If user is not logged in or not owner of the blog, isBlogOwner = false.
+    const isBlogOwner =
+      req.user === undefined
+        ? false
+        : req.user._id.toString() !== blog.author._id.toString()
+        ? false
+        : true;
+
+    if (!isBlogOwner) {
+      return res.status(401).json({
+        error: true,
+        message: "You are not allowed to do this action.",
+      });
+    }
+
+    try {
+      // Removes the blog from the User's blog array.
+      await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          $pull: {
+            blogs: blogID,
+          },
+        },
+        { new: true }
+      );
+
+      // Deletes the blog
+      await Blog.findByIdAndDelete(blog._id).exec();
+
+      return res.status(200).json({
+        success: true,
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(500).json({
+        error: true,
+        message: "Something went wrong.",
+      });
+    }
+  }),
+];
