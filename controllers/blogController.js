@@ -15,21 +15,13 @@ exports.GET_ALL_BLOGS = asyncHandler(async (req, res, next) => {
   const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
   const blogsSkipped = (currentPage - 1) * blogsPerPage;
 
-  const totalBlogCount = await Blog.countDocuments({});
-
-  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
-
-  // If user is currently on a higher page number than what is currently available,
-  // changes the currentPage to the last page.
-  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
-
   // Note: _id: 1 is added to sort becuase MongoDB will sometimes need
   // a field with a unique value if documents are the same.
   // It would be possible for dates to be equal.
   // The additional _id field helps to sort properly.
   // Query: This query gets a collection of blogs, as well as the
   // blog author's display_real_name setting.
-  const multipleBlogs = await Blog.find({})
+  const multipleBlogs = await Blog.find({ published: true })
     .populate({
       path: "author",
       populate: {
@@ -41,6 +33,14 @@ exports.GET_ALL_BLOGS = asyncHandler(async (req, res, next) => {
     .skip(blogsSkipped)
     .limit(blogsPerPage)
     .exec();
+
+  const totalBlogCount = await Blog.countDocuments({ published: true });
+
+  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
+
+  // If user is currently on a higher page number than what is currently available,
+  // changes the currentPage to the last page.
+  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
 
   // Edits the blogs's author field to display the real name or last name depending on author's preferences.
   const userBlogsWithAuthorName = multipleBlogs.map((blog) => {
