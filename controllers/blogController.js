@@ -166,13 +166,18 @@ exports.POST_ONE_BLOG = [
     // Get date at time of creating blog.
     const blog_created_date = new Date().toISOString();
 
+    // Gets the boolena of whether the blog should be saved as a draft.
+    const isDraft = req.body.draft ? true : false;
+
     // Creates a blog Object.
+    // Only adds date if being published.
+    // last_edited is not used.
     const blog = new Blog({
       title: req.body.title,
       blog: req.body.blog,
-      date: blog_created_date,
+      date: isDraft ? null : blog_created_date,
       author: req.user,
-      published: true,
+      published: isDraft ? false : true,
       shortId: shortId,
     });
 
