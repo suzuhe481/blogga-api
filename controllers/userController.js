@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 
 const asyncHandler = require("express-async-handler");
+const { body, validationResult } = require("express-validator");
 const generatePassword = require("../lib/passwordUtil").generatePassword;
 
 const User = require("../models/User");
-const Post = require("../models/Post");
+const Blog = require("../models/Blog");
 const UserPreferences = require("../models/UserPreferences");
 const { validatePassword } = require("../lib/passwordUtil");
 
@@ -42,96 +43,118 @@ exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
 
 // POST - create a single user.
 // Public to all.
-exports.POST_ONE_USER = asyncHandler(async (req, res, next) => {
-  // Get date at time of creating account.
-  const account_created_date = new Date().toISOString();
+exports.POST_ONE_USER = [
+  // Validate form data.
+  body("first_name", "First name cannot be empty.")
+    .trim()
+    .escape()
+    .isLength({ min: 1 }),
+  body("last_name", "Last name cannot be empty.")
+    .trim()
+    .escape()
+    .isLength({ min: 1 }),
+  body("username")
+    .trim()
+    .escape()
+    .isLength({ min: 4 })
+    .custom((value) => !/\s/.test(value))
+    .withMessage("Username cannot have spaces.")
+    .isAlphanumeric()
+    .withMessage("Username can only contain letters or numbers.")
+    // Checks is a username is taken.
+    .custom(async (username) => {
+      const usernameIsTaken = await User.findOne({
+        username: username,
+      }).exec();
 
-  // Creating a test user object, with form's given email
-  // const user = new User({
-  //   first_name: "First",
-  //   last_name: "Last",
-  //   email: req.body.email,
-  //   account_created_date: date,
-  //   status: "Member",
-  // });
+      if (usernameIsTaken) {
+        throw new Error("Validator: Username is already in use.");
+      }
+    }),
+  // Checks if an email address is taken.
+  body("email", "Email is not valid.")
+    .trim()
+    .escape()
+    .isEmail()
+    .custom(async (email) => {
+      const emailIsTaken = await User.findOne({ email: email }).exec();
 
-  // Creates a user object.
-  const user = new User({
-    first_name: req.body.first_name,
-    last_name: req.body.last_name,
-    username: req.body.username,
-    email: req.body.email,
-    account_created_date: account_created_date,
-    status: "Member",
-    verified: false,
-  });
+      if (emailIsTaken) {
+        throw new Error("Validator: Email is already in use.");
+      }
+    }),
 
-  // console.log(`User is: ${user}`);
+  asyncHandler(async (req, res, next) => {
+    // Extract the validation errors.
+    const errors = validationResult(req);
 
-  const ErrorMessages = [];
+    // Get date at time of creating account.
+    const account_created_date = new Date().toISOString();
 
-  // Checks if email has already been used.
-  const emailIsTaken = await User.findOne({ email: req.body.email }).exec();
-
-  const usernameIsTaken = await User.findOne({
-    username: req.body.username,
-  }).exec();
-
-  if (emailIsTaken) {
-    ErrorMessages.push("Email is already in use.");
-  }
-
-  if (usernameIsTaken) {
-    ErrorMessages.push("Username is already in use.");
-  }
-
-  if (ErrorMessages.length > 0) {
-    // console.log("errors exist");
-    // console.log(ErrorMessages);
-    return res.status(401).json({
-      error: true,
-      message: ErrorMessages,
+    // Creates a user object.
+    const user = new User({
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      username: req.body.username,
+      email: req.body.email,
+      account_created_date: account_created_date,
+      status: "Member",
+      verified: false,
     });
-  } else {
-    try {
-      // Creates a hashed password
-      const hashedPassword = await generatePassword(req.body.password);
 
-      // Assigns hashed password to user object.
-      user.password = hashedPassword;
+    // Sending errors ia validation failed.
+    if (!errors.isEmpty()) {
+      // Renames the "msg" key to "message", since the frontend uses message as the key.
+      errors.errors.map((value) => {
+        value.message = value.msg;
+        delete value.msg;
+        return value;
+      });
 
-      // Create the user preferences
-      const userPreferences = new UserPreferences();
+      return res.status(401).json({
+        error: true,
+        message: errors.array(),
+      });
+    } else {
+      try {
+        // Creates a hashed password
+        const hashedPassword = await generatePassword(req.body.password);
 
-      // Save user's id to userPreferences
-      userPreferences.user = user._id;
+        // Assigns hashed password to user object.
+        user.password = hashedPassword;
 
-      // Save the userPreferences
-      await userPreferences.save();
+        // Create the user preferences
+        const userPreferences = new UserPreferences();
 
-      // Update user with user_preferences id
-      user.user_preferences = userPreferences._id;
+        // Save user's id to userPreferences
+        userPreferences.user = user._id;
 
-      // Save new user and redirect to home page.
-      await user.save();
+        // Save the userPreferences
+        await userPreferences.save();
 
-      // await transporter.sendMail(mailData);
-      const result = await sendVerificationEmail(user);
-    } catch (err) {
-      console.log(err);
+        // Update user with user_preferences id
+        user.user_preferences = userPreferences._id;
 
-      // Deletes userPreferences after it was created
-      if (userPreferences && userPreferences._id) {
-        await UserPreferences.deleteOne({ _id: userPreferences._id });
+        // Save new user and redirect to home page.
+        await user.save();
+
+        const result = await sendVerificationEmail(user);
+      } catch (err) {
+        console.log(err);
+
+        // Deletes userPreferences after it was created
+        if (userPreferences && userPreferences._id) {
+          await UserPreferences.deleteOne({ _id: userPreferences._id });
+        }
       }
     }
-  }
 
-  return res.status(200).json({
-    success: true,
-    user: user,
-  });
-});
+    return res.status(200).json({
+      success: true,
+      user: user,
+    });
+  }),
+];
 
 // PUT - update a single user
 // Only for own user and admin.
@@ -353,7 +376,7 @@ exports.PUT_PASSWORD = [
   }),
 ];
 
-// DELETE - Deletes the profile of currently logged in user and their posts.
+// DELETE - Deletes the profile of currently logged in user and their blogs.
 // The logged in user is identified by the current user session based on req.user.
 // isUser - Checks that the user is logged in.
 exports.DELETE_ONE_USER = [
@@ -367,8 +390,8 @@ exports.DELETE_ONE_USER = [
     // Get the user ID from the user session.
     const userID = req.user._id;
 
-    // Delete order - Posts, Preferences, User.
-    await Post.deleteMany({ user: userID }).exec();
+    // Delete order - Blogs, Preferences, User.
+    await Blog.deleteMany({ user: userID }).exec();
     await UserPreferences.deleteOne({ user: userID }).exec();
     await User.findByIdAndDelete(userID).exec();
 
@@ -382,9 +405,9 @@ exports.DELETE_ONE_USER = [
   }),
 ];
 
-// GET - Gets all of the posts from the given user.
+// GET - Gets all of the blogs from the given user.
 // Uses pagination
-exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
+exports.GET_USER_BLOGS = asyncHandler(async (req, res, next) => {
   const userID = req.params.id;
 
   // ID is not given or is not valid.
@@ -395,78 +418,248 @@ exports.GET_USER_POSTS = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Getting the user
-  const user = await User.findById(userID).exec();
+  try {
+    // Getting the user
+    const user = await User.findById(userID).exec();
 
-  // User does not exist
-  if (!user) {
-    return res.status(404).json({
-      error: true,
-      message: "User does not exist",
+    // User does not exist
+    if (!user) {
+      return res.status(404).json({
+        error: true,
+        message: "User does not exist",
+      });
+    }
+
+    // Checks if the logged in user is the same user of the data being requested.
+    // MongoDB ObjectId needs to be converted to string.
+    const isLoggedInUser = !req.user
+      ? false
+      : req.user._id.toString() !== req.params.id
+      ? false
+      : true;
+
+    // Getting user preferences object
+    const userPreferences = await UserPreferences.findById(
+      user.user_preferences
+    ).exec();
+
+    // Count of published blogs.
+    const blogsPublished = await Blog.countDocuments({
+      _id: { $in: user.blogs },
+      published: true,
     });
-  }
 
-  // Getting user preferences object
-  const userPreferences = await UserPreferences.findById(
-    user.user_preferences
-  ).exec();
+    // Pagination variables
+    const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+    const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+    const blogsSkipped = (currentPage - 1) * blogsPerPage;
 
-  // Pagination variables
-  const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
-  const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
-  const blogsSkipped = (currentPage - 1) * blogsPerPage;
+    // const totalBlogCount = user.blogs.length;
+    // const blogsPublished = userBlogs.length;
 
-  const totalBlogCount = user.posts.length;
+    const totalPages = Math.ceil(blogsPublished / blogsPerPage);
 
-  const totalPages = Math.ceil(totalBlogCount / blogsPerPage);
+    // If user is currently on a higher page number than what is currently available,
+    // changes the currentPage to the last page.
+    // If the page becomes less than 1, sets to 1.
+    // Otherwise, gets set to the currentPage.
+    const newCurrentPage =
+      currentPage <= 1
+        ? 1
+        : currentPage > totalPages
+        ? totalPages
+        : currentPage;
 
-  // If user is currently on a higher page number than what is currently available,
-  // changes the currentPage to the last page.
-  const newCurrentPage = currentPage > totalPages ? totalPages : currentPage;
-
-  // Note: _id: 1 is added to sort because MongoDB will sometimes need
-  // a field with a unique value if documents are the same.
-  // It would be possible for dates to be equal.
-  // The additional _id field helps to sort properly.
-  // Query: This query gets a collection of posts from a SPECIFIC author, as well as the
-  // post author's display_real_name setting.
-  const userPosts = await Post.find({
-    _id: { $in: user.posts },
-  })
-    .populate({
-      path: "author",
-      populate: {
-        path: "user_preferences",
-        select: "display_real_name",
-      },
+    // Note: _id: 1 is added to sort because MongoDB will sometimes need
+    // a field with a unique value if documents are the same.
+    // It would be possible for dates to be equal.
+    // The additional _id field helps to sort properly.
+    // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
+    // blog author's display_real_name setting.
+    const userBlogs = await Blog.find({
+      _id: { $in: user.blogs },
+      published: true,
     })
-    .sort({ date: -1, _id: 1 })
-    .skip(blogsSkipped)
-    .limit(blogsPerPage)
-    .exec();
+      .populate({
+        path: "author",
+        populate: {
+          path: "user_preferences",
+          select: "display_real_name",
+        },
+      })
+      .sort({ date: -1, _id: 1 })
+      .skip(blogsSkipped)
+      .limit(blogsPerPage)
+      .exec();
 
-  // Edits the author field to display the real name or last name depending on preferences.
-  const userPostsWithAuthorName = userPosts.map((post) => {
+    // Edits the author field to display the real name or last name depending on preferences.
+    const userBlogsWithAuthorName = userBlogs.map((blog) => {
+      const displayName = userPreferences.display_real_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.username;
+
+      // toObject() converts blog into a plain-old javascript object.
+      return {
+        ...blog.toObject(),
+        author: displayName,
+        authorID: blog.author._id,
+      };
+    });
+
+    // Separate displayName variable to send in response.
     const displayName = userPreferences.display_real_name
       ? `${user.first_name} ${user.last_name}`
       : user.username;
+    console.log("after");
 
-    // toObject() converts post into a plain-old javascript object.
-    return {
-      ...post.toObject(),
-      author: displayName,
+    const authorData = {
+      name: displayName,
+      memberSince: user.account_created_date,
+      isLoggedInUser: isLoggedInUser,
+      blogsPublished,
     };
-  });
 
-  // Separate displayName variable to send in response.
-  const displayName = userPreferences.display_real_name
-    ? `${user.first_name} ${user.last_name}`
-    : user.username;
-
-  return res.status(200).json({
-    userPosts: userPostsWithAuthorName,
-    totalBlogCount,
-    newCurrentPage,
-    author: displayName,
-  });
+    return res.status(200).json({
+      userBlogs: userBlogsWithAuthorName,
+      newCurrentPage,
+      authorData,
+    });
+  } catch (error) {
+    console.log(error);
+  }
 });
+
+exports.GET_USER_DRAFTS = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    try {
+      // Checks if user in session is the same as the user being requested
+      if (req.user._id.toString() !== req.params.id) {
+        // Return a not authorized error
+        return res.status(401).json({
+          error: true,
+          message: "You are not authorized.",
+        });
+      }
+
+      const userID = req.params.id;
+
+      // ID is not given or is not valid.
+      if (!userID || !mongoose.isValidObjectId(userID)) {
+        return res.status(400).json({
+          error: true,
+          message: "ID is invalid.",
+        });
+      }
+
+      // Getting the user
+      const user = await User.findById(userID).exec();
+
+      // User does not exist
+      if (!user) {
+        return res.status(404).json({
+          error: true,
+          message: "User does not exist",
+        });
+      }
+
+      // Checks if the logged in user is the same user of the data being requested.
+      // MongoDB ObjectId needs to be converted to string.
+      const isLoggedInUser =
+        req.user._id.toString() !== req.params.id ? false : true;
+
+      // Getting user preferences object
+      const userPreferences = await UserPreferences.findById(
+        user.user_preferences
+      ).exec();
+
+      // Count of published blogs.
+      const blogsPublished = await Blog.countDocuments({
+        _id: { $in: user.blogs },
+        published: true,
+      });
+
+      // Count of drafts.
+      const blogDrafts = await Blog.countDocuments({
+        _id: { $in: user.blogs },
+        published: false,
+      });
+
+      // Pagination variables
+      const currentPage = parseInt(req.query.currentPage) || 1; // Default 1
+      const blogsPerPage = parseInt(req.query.blogsPerPage) || 5; // Default 5
+      const blogsSkipped = (currentPage - 1) * blogsPerPage;
+
+      // const totalBlogCount = user.blogs.length;
+
+      const totalPages = Math.ceil(blogDrafts / blogsPerPage);
+
+      // If user is currently on a higher page number than what is currently available,
+      // changes the currentPage to the last page.
+      // If the page becomes less than 1, sets to 1.
+      // Otherwise, gets set to the currentPage.
+      const newCurrentPage =
+        currentPage <= 1
+          ? 1
+          : currentPage > totalPages
+          ? totalPages
+          : currentPage;
+
+      // Note: _id: 1 is added to sort because MongoDB will sometimes need
+      // a field with a unique value if documents are the same.
+      // It would be possible for dates to be equal.
+      // The additional _id field helps to sort properly.
+      // Query: This query gets a collection of blogs from a SPECIFIC author, as well as the
+      // blog author's display_real_name setting.
+      const userBlogs = await Blog.find({
+        _id: { $in: user.blogs },
+        published: false,
+      })
+        .populate({
+          path: "author",
+          populate: {
+            path: "user_preferences",
+            select: "display_real_name",
+          },
+        })
+        .sort({ date: -1, _id: 1 })
+        .skip(blogsSkipped)
+        .limit(blogsPerPage)
+        .exec();
+
+      // Edits the author field to display the real name or last name depending on preferences.
+      const userBlogsWithAuthorName = userBlogs.map((blog) => {
+        const displayName = userPreferences.display_real_name
+          ? `${user.first_name} ${user.last_name}`
+          : user.username;
+
+        // toObject() converts blog into a plain-old javascript object.
+        return {
+          ...blog.toObject(),
+          author: displayName,
+        };
+      });
+
+      // Separate displayName variable to send in response.
+      const displayName = userPreferences.display_real_name
+        ? `${user.first_name} ${user.last_name}`
+        : user.username;
+
+      const authorData = {
+        name: displayName,
+        memberSince: user.account_created_date,
+        isLoggedInUser: isLoggedInUser,
+        blogsPublished: blogsPublished,
+        blogDrafts: blogDrafts,
+      };
+
+      return res.status(200).json({
+        userBlogs: userBlogsWithAuthorName,
+        newCurrentPage,
+        authorData: authorData,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }),
+];
