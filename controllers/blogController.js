@@ -122,6 +122,72 @@ exports.GET_ONE_BLOG = asyncHandler(async (req, res, next) => {
   }
 });
 
+// GET - Single draft
+exports.GET_ONE_DRAFT = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    try {
+      // Gets a single post and populate's the author's display_real_name preference
+      const blog = await Blog.findOne({ shortId: req.params.id }).populate({
+        path: "author",
+        populate: {
+          path: "user_preferences",
+          select: "display_real_name",
+        },
+      });
+
+      // Checks if the logged in user is the same user of the data being requested.
+      // MongoDB ObjectId needs to be converted to string.
+      // If user is not logged in or not owner of the blog, isBlogOwner = false.
+      const isBlogOwner =
+        req.user === undefined
+          ? false
+          : req.user._id.toString() !== blog.author._id.toString()
+          ? false
+          : true;
+
+      // Prevents other users from editing this blog.
+      if (!isBlogOwner) {
+        // Return a not authorized error
+        return res.status(401).json({
+          error: true,
+          message: "You are not authorized.",
+        });
+      }
+
+      // Prevents a user from seeing an unpublished blog if they are not the owner.
+      if (!isBlogOwner && !blog.published) {
+        return res.status(500).json({
+          error: true,
+          message: "Could not retrieve blog.",
+        });
+      }
+
+      // Gets the appropriate display name based on user's preference.
+      const displayName =
+        blog.author.user_preferences === null
+          ? blog.author.username
+          : blog.author.user_preferences.display_real_name
+          ? `${blog.author.first_name} ${blog.author.last_name}`
+          : blog.author.username;
+
+      const blogWithAuthorName = {
+        ...blog.toObject(),
+        author: displayName,
+        authorID: blog.author._id,
+        isBlogOwner,
+      };
+
+      return res.status(200).json({ blog: blogWithAuthorName });
+    } catch (err) {
+      return res.status(500).json({
+        error: true,
+        message: "Could not retrieve blog.",
+      });
+    }
+  }),
+];
+
 // // POST - create a single blog
 exports.POST_ONE_BLOG = [
   isUser,
