@@ -432,8 +432,11 @@ exports.GET_USER_BLOGS = asyncHandler(async (req, res, next) => {
 
     // Checks if the logged in user is the same user of the data being requested.
     // MongoDB ObjectId needs to be converted to string.
-    const isLoggedInUser =
-      req.user._id.toString() !== req.params.id ? false : true;
+    const isLoggedInUser = !req.user
+      ? false
+      : req.user._id.toString() !== req.params.id
+      ? false
+      : true;
 
     // Getting user preferences object
     const userPreferences = await UserPreferences.findById(
