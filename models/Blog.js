@@ -14,7 +14,11 @@ const BlogSchema = new Schema({
   },
   date: {
     type: Date,
-    required: true,
+    required: false,
+  },
+  last_edited: {
+    type: Date,
+    required: false,
   },
   author: {
     type: Schema.Types.ObjectId,
