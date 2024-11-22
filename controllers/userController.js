@@ -502,6 +502,7 @@ exports.GET_USER_BLOGS = asyncHandler(async (req, res, next) => {
       return {
         ...blog.toObject(),
         author: displayName,
+        authorID: blog.author._id,
       };
     });
 
