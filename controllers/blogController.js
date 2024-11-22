@@ -440,3 +440,58 @@ exports.DELETE_ONE_BLOG = [
     }
   }),
 ];
+
+// Toggles blog visibility between a unpublished(draft) and published(blog).
+exports.TOGGLE_VISIBILITY = [
+  isUser,
+  asyncHandler(async (req, res, next) => {
+    // Gets a single post and populate's the author
+    const blog = await Blog.findOne({ shortId: req.params.id }).populate({
+      path: "author",
+    });
+
+    // Checks if the logged in user is the same user of the data being requested.
+    // MongoDB ObjectId needs to be converted to string.
+    // If user is not logged in or not owner of the blog, isBlogOwner = false.
+    const isBlogOwner =
+      req.user === undefined
+        ? false
+        : req.user._id.toString() !== blog.author._id.toString()
+        ? false
+        : true;
+
+    if (!isBlogOwner) {
+      return res.status(401).json({
+        error: true,
+        message: "You are not allowed to do this action.",
+      });
+    }
+
+    try {
+      // Blog is public.
+      // Save as draft.
+      if (blog.published) {
+        blog.published = false;
+        blog.save();
+      }
+      // Blog is a draft.
+      // Make it public.
+      else if (!blog.published) {
+        blog.published = true;
+        blog.save();
+      }
+
+      return res.status(200).json({
+        success: true,
+        blog: blog,
+      });
+    } catch (error) {
+      console.log(error);
+
+      return res.status(500).json({
+        error: true,
+        message: "Something went wrong.",
+      });
+    }
+  }),
+];
