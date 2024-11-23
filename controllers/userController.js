@@ -411,10 +411,14 @@ exports.PUT_PASSWORD = [
 exports.DELETE_ONE_USER = [
   isUser,
   asyncHandler(async (req, res, next) => {
-    // Checks IDs of logged in user and requested user to delete.
-    // if (req.user._id != req.params.id) {
-    //   return;
-    // }
+    // Checks if user in session is the same as the user being requested
+    if (req.user._id.toString() !== req.params.id) {
+      // Return a not authorized error
+      return res.status(401).json({
+        error: true,
+        message: "You are not authorized.",
+      });
+    }
 
     // Get the user ID from the user session.
     const userID = req.user._id;
