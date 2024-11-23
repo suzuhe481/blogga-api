@@ -26,8 +26,6 @@ exports.GET_ALL_USERS = asyncHandler(async (req, res, next) => {
 exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.params.id).exec();
 
-  // console.log(`User: ${user}`);
-
   if (!user) {
     return res.status(200).json({
       error: true,
@@ -35,9 +33,40 @@ exports.GET_ONE_USER = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Getting user preferences object/
+  const userPreferences = await UserPreferences.findById(
+    user.user_preferences
+  ).exec();
+
+  // Gets the user's preferred display name/
+  const displayName = userPreferences.display_real_name
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
+
+  // Converting user to object to remove MongoDB properties.
+  const userObj = user.toObject();
+
+  // Sanitizing user to remove sensitive information
+  const {
+    first_name,
+    last_name,
+    username,
+    email,
+    status,
+    comments,
+    verified,
+    user_preferences,
+    blogs,
+    password,
+    ...sanitizedUser
+  } = userObj;
+
+  // Adding prefference display name as "author" to user
+  sanitizedUser["author"] = displayName;
+
   return res.status(200).json({
     success: true,
-    user: user,
+    user: sanitizedUser,
   });
 });
 
